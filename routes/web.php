@@ -12,6 +12,7 @@ use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\CheckController;
 use App\Http\Controllers\BiometricDeviceController;
 use App\Http\Controllers\FaceController;
+use App\Http\Controllers\PayReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -129,6 +130,9 @@ Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin']], function 
     Route::get('/attendance/chart-data', [AttendanceController::class, 'chartData'])->name('attendance.chart');
     Route::get('/attendance/export/excel', [AttendanceController::class, 'exportExcel'])->name('attendance.export.excel');
     Route::get('/attendance/export/pdf', [AttendanceController::class, 'exportPdf'])->name('attendance.export.pdf');
+
+    // --- PAY REPORT ---
+    Route::get('/pay-report', [PayReportController::class, 'index'])->name('pay.report');
 
     // --- PHASE 3: SETTINGS & RESOLUTIONS API ---
     // 1. The UI View for Settings

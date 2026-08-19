@@ -180,4 +180,42 @@
         </div>
     @endif
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Target the input fields by their IDs
+    const grossSalaryInput = document.getElementById('gross_salary');
+    const totalWorkingDaysInput = document.getElementById('total_working_days');
+    const totalAbsentDaysInput = document.getElementById('total_absent_days');
+    const deductionsInput = document.getElementById('deductions');
+    const netSalaryInput = document.getElementById('net_salary');
+
+    // 2. Create the calculation function
+    function calculatePayslip() {
+        // Parse the values, default to 0 if empty
+        const grossSalary = parseFloat(grossSalaryInput.value) || 0;
+        const totalWorkingDays = parseFloat(totalWorkingDaysInput.value) || 0;
+        const totalAbsentDays = parseFloat(totalAbsentDaysInput.value) || 0;
+
+        if (totalWorkingDays > 0) {
+            // Formula: (Gross / Total Working Days) * Absent Days
+            const perDaySalary = grossSalary / totalWorkingDays;
+            const deductions = perDaySalary * totalAbsentDays;
+            const netSalary = grossSalary - deductions;
+
+            // Update the UI and round to the nearest whole number
+            deductionsInput.value = Math.round(deductions);
+            netSalaryInput.value = Math.round(netSalary);
+        } else {
+            // Reset if working days are 0 or empty to avoid Infinity/NaN errors
+            deductionsInput.value = 0;
+            netSalaryInput.value = grossSalary;
+        }
+    }
+
+    // 3. Listen for any typing or clicking changes on the input fields
+    grossSalaryInput.addEventListener('input', calculatePayslip);
+    totalWorkingDaysInput.addEventListener('input', calculatePayslip);
+    totalAbsentDaysInput.addEventListener('input', calculatePayslip);
+});
+</script>
 @endsection
