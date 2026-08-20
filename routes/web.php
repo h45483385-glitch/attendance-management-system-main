@@ -169,3 +169,7 @@ Route::post('/scan-face', [FaceController::class, 'scanFace'])->name('scan.face'
 Route::group(['middleware' => ['auth']], function () {
     // future user features
 });
+// Overtime Approval Routes
+Route::get('/overtime-approvals', [App\Http\Controllers\OvertimeController::class, 'index'])->name('overtime.index');
+Route::post('/overtime-approvals/approve/{id}', [App\Http\Controllers\OvertimeController::class, 'approve'])->name('overtime.approve');
+Route::post('/overtime-approvals/reject/{id}', [App\Http\Controllers\OvertimeController::class, 'reject'])->name('overtime.reject');
