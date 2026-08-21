@@ -173,3 +173,7 @@ Route::group(['middleware' => ['auth']], function () {
 Route::get('/overtime-approvals', [App\Http\Controllers\OvertimeController::class, 'index'])->name('overtime.index');
 Route::post('/overtime-approvals/approve/{id}', [App\Http\Controllers\OvertimeController::class, 'approve'])->name('overtime.approve');
 Route::post('/overtime-approvals/reject/{id}', [App\Http\Controllers\OvertimeController::class, 'reject'])->name('overtime.reject');
+// Salary Master Settings
+Route::get('/settings/salary-master', [App\Http\Controllers\SalaryMasterController::class, 'index'])->name('salary.master');
+Route::post('/settings/salary-master/update/{id}', [App\Http\Controllers\SalaryMasterController::class, 'update'])->name('salary.master.update');
+Route::get('/pay-report/fetch/{id}', [App\Http\Controllers\PayReportController::class, 'fetchPayData'])->name('pay-report.fetch');

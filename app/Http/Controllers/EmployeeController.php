@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Employee;
 use App\Models\Role;
 use App\Models\Schedule;
+use App\Models\SalaryMaster; // புதிதாக இணைக்கப்பட்ட மாடல்
 use App\Http\Requests\EmployeeRec;
 use RealRashid\SweetAlert\Facades\Alert;
 use Illuminate\Support\Facades\Storage;
@@ -32,6 +33,19 @@ class EmployeeController extends Controller
         $employee->pin_code = bcrypt($request->pin_code);
         $employee->save();
 
+        // ======================================================
+        // PIPELINE 1: AUTO-SYNC WITH SALARY MASTER
+        // ======================================================
+        if ($request->position) {
+            SalaryMaster::firstOrCreate(
+                ['designation' => $request->position],
+                [
+                    'department' => 'General', // Default department
+                    'current_base_salary' => 0, // அட்மின் பிறகு செட்டிங்ஸில் அப்டேட் செய்துகொள்ளலாம்
+                ]
+            );
+        }
+
         if ($request->schedule) {
             $schedule = Schedule::whereSlug($request->schedule)->first();
             $employee->schedules()->attach($schedule);
@@ -51,6 +65,19 @@ class EmployeeController extends Controller
         $employee->email = $request->email;
         $employee->pin_code = bcrypt($request->pin_code);
         $employee->save();
+
+        // ======================================================
+        // PIPELINE 1: AUTO-SYNC WITH SALARY MASTER ON UPDATE
+        // ======================================================
+        if ($request->position) {
+            SalaryMaster::firstOrCreate(
+                ['designation' => $request->position],
+                [
+                    'department' => 'General',
+                    'current_base_salary' => 0,
+                ]
+            );
+        }
 
         if ($request->schedule) {
             $employee->schedules()->detach();
@@ -108,7 +135,6 @@ class EmployeeController extends Controller
             // 2. UPLOAD TO AWS S3
             // -------------------------
             try {
-                // THE FIX: The 'public' parameter has been removed completely.
                 \Illuminate\Support\Facades\Storage::disk('s3')->put('faces/' . $fileName, $imageData);
             } catch (\Exception $s3Exception) {
                 \Illuminate\Support\Facades\Log::error('S3 Upload Failed: ' . $s3Exception->getMessage());

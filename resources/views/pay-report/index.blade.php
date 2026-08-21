@@ -62,6 +62,7 @@
                         </div>
                     </div>
                     <div>
+                        <!-- fetchPayData(111) is called here -->
                         <button class="btn btn-sm text-white rounded-pill px-3 py-2 shadow-sm" style="background-color: #5867dd; font-weight: 600;" onclick="fetchPayData(111)" data-toggle="modal" data-bs-toggle="modal" data-target="#payslipModal" data-bs-target="#payslipModal">
                             <i class="fas fa-file-invoice-dollar me-1"></i> Review & Generate Payslip
                         </button>
@@ -74,7 +75,7 @@
 
 <!-- PAYSLIP REVIEW MODAL -->
 <div class="modal fade" id="payslipModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg" style="max-width: 850px;"> <!-- அகலத்தை கொஞ்சம் அதிகரித்துள்ளோம் -->
+    <div class="modal-dialog modal-lg" style="max-width: 850px;"> 
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header text-white" style="background-color: #2c3e50; border-top-left-radius: 12px; border-top-right-radius: 12px;">
                 <h5 class="modal-title fw-bold"><i class="fas fa-file-invoice me-2"></i> Payroll Summary - #111</h5>
@@ -113,24 +114,23 @@
                         </div>
                     </div>
 
-                    <!-- PUSHED TO 4 COLUMNS TO ACCOMMODATE PER DAY WAGE -->
                     <div class="row mt-4">
                         <div class="col-md-3">
                             <label class="text-muted small fw-bold text-uppercase">Base Gross (₹)</label>
-                            <input type="number" class="form-control auto-field calc-trigger" id="gross_salary" name="gross_salary" value="30000" readonly>
+                            <input type="number" class="form-control auto-field calc-trigger" id="gross_salary" name="gross_salary" value="0" readonly>
                         </div>
                         <div class="col-md-3">
                             <label class="text-muted small fw-bold text-uppercase text-info">Per Day Wage (₹)</label>
-                            <input type="number" class="form-control auto-field calc-trigger text-info" id="per_day_salary" name="per_day_salary" value="1153.85" readonly>
+                            <input type="number" class="form-control auto-field calc-trigger text-info" id="per_day_salary" name="per_day_salary" value="0" readonly>
                         </div>
                         <div class="col-md-3">
                             <label class="text-muted small fw-bold text-uppercase text-danger">Deductions (₹)</label>
-                            <input type="number" class="form-control auto-field calc-trigger text-danger" id="deductions" name="deductions" value="2308" readonly>
+                            <input type="number" class="form-control auto-field calc-trigger text-danger" id="deductions" name="deductions" value="0" readonly>
                         </div>
                         <div class="col-md-3">
                             <label class="text-muted small fw-bold text-uppercase" style="color: #5867dd;">Final Net (₹)</label>
                             <div class="input-group">
-                                <input type="number" class="form-control fw-bold" style="font-size: 16px; background-color: #e0e7ff; color: #5867dd; border-color: #5867dd; pointer-events: none;" id="net_salary" name="net_salary" value="27692" readonly>
+                                <input type="number" class="form-control fw-bold" style="font-size: 16px; background-color: #e0e7ff; color: #5867dd; border-color: #5867dd; pointer-events: none;" id="net_salary" name="net_salary" value="0" readonly>
                             </div>
                         </div>
                     </div>
@@ -205,5 +205,33 @@
             }
         });
     });
+
+    // ==============================================================
+    // 🚀 NEW AJAX FETCH LOGIC (PIPELINE 3)
+    // ==============================================================
+    function fetchPayData(employeeId) {
+        // Fetch API மூலம் நாம் உருவாக்கிய Route-ஐ அழைக்கிறது
+        fetch(`/pay-report/fetch/${employeeId}`)
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    // Salary Master-ல் இருந்து வந்த Base Salary-யை நிரப்புகிறோம்
+                    let grossInput = document.getElementById('gross_salary');
+                    grossInput.value = data.base_salary;
+                    
+                    // மேலேயுள்ள கால்குலேஷன் லாஜிக்கை ஆட்டோமேட்டிக்காகத் தூண்டிவிடுகிறோம் (Trigger)
+                    grossInput.dispatchEvent(new Event('input', { bubbles: true }));
+                } else {
+                    console.log('Error:', data.message);
+                    // எம்ப்ளாயி கிடைக்கவில்லை என்றால் 0 ஆக்கி விடுகிறோம்
+                    let grossInput = document.getElementById('gross_salary');
+                    grossInput.value = 0;
+                    grossInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            })
+            .catch(error => {
+                console.error('Fetch Error:', error);
+            });
+    }
 </script>
 @endsection
