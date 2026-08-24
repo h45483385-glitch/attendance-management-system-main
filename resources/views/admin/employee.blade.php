@@ -6,9 +6,9 @@
     .staff-card { border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: none; }
     .table-modern td, .table-modern th { vertical-align: middle; border-top: 1px solid #f1f5f9; padding: 15px; }
     .table-modern thead th { background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569; font-weight: 700; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; }
-    
+
     .avatar-box { width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; color: white; background: linear-gradient(135deg, #4f46e5, #3b82f6); box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2); }
-    
+
     /* Action Buttons Customization */
     .btn-scan-face { background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; font-weight: 600; border-radius: 8px; padding: 6px 12px; font-size: 12px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); transition: all 0.2s; }
     .btn-scan-face:hover { transform: translateY(-2px); color: white; }
@@ -36,7 +36,7 @@
 @section('content')
 <div class="row">
     <div class="col-12">
-        
+
         <!-- TOP HARDWARE STATUS BAR -->
         <div class="row mb-4">
             <div class="col-md-6">
@@ -62,7 +62,7 @@
         <!-- MAIN EMPLOYEE & BIOMETRIC DIRECTORY -->
         <div class="card staff-card mb-4">
             <div class="card-body p-4">
-                
+
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <div>
                         <h4 class="mt-0 font-weight-bold text-dark"><i class="ti-id-badge text-primary mr-2"></i> Employee Directory & Biometric Hub</h4>
@@ -82,74 +82,49 @@
                                 <th>Contact Details</th>
                                 <th>Face ID Status</th>
                                 <th>Fingerprint Status</th>
-                                <th class="text-right">Biometric Actions</th>
-                            </tr>
+<th class="text-right" style="min-width: 180px;">Biometric Actions</th>                            </tr>
                         </thead>
                         <tbody>
-                            <!-- ROW 1: ADMIN USER -->
+                            <!-- DYNAMIC EMPLOYEE ROWS FROM DATABASE -->
+                            @forelse($employees as $emp)
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <div class="avatar-box mr-3">A</div>
+                                        <div class="avatar-box mr-3" style="background: linear-gradient(135deg, #0ea5e9, #2563eb);">
+                                            {{ strtoupper(substr($emp->name, 0, 1)) }}
+                                        </div>
                                         <div>
-                                            <h6 class="mb-0 font-weight-bold text-dark">Admin User</h6>
-                                            <span class="text-muted font-12 font-weight-bold">ID: #111 | Administrator</span>
+                                            <h6 class="mb-0 font-weight-bold text-dark">{{ $emp->name }}</h6>
+                                            <span class="text-muted font-12 font-weight-bold">ID: #{{ $emp->id }} | {{ $emp->position ?? 'Staff' }}</span>
                                         </div>
                                     </div>
                                 </td>
-                                <td><div class="text-dark font-weight-bold"><i class="ti-email text-muted mr-1"></i> admin@ams.com</div></td>
+                                <td><div class="text-dark font-weight-bold"><i class="ti-email text-muted mr-1"></i> {{ $emp->email }}</div></td>
                                 <td>
-                                    <span class="badge px-3 py-1 font-12" style="background: #fee2e2; color: #dc2626; border-radius: 20px;">
-                                        <i class="ti-close mr-1"></i> Setup Pending
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="badge px-3 py-1 font-12" style="background: #fee2e2; color: #dc2626; border-radius: 20px;">
-                                        <i class="ti-close mr-1"></i> Not Synced
-                                    </span>
-                                </td>
-                                <td class="text-right">
-                                    <button onclick="openCameraModal('111', 'Admin User')" class="btn btn-scan-face mr-1">
-                                        <i class="ti-face-smile"></i> Scan Face
-                                    </button>
-                                    <button onclick="registerFingerprint('111', 'Admin User')" class="btn btn-fingerprint">
-                                        <i class="ti-hand-open"></i> Fingerprint
-                                    </button>
-                                </td>
-                            </tr>
-
-                            <!-- ROW 2: HARIRAM -->
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="avatar-box mr-3" style="background: linear-gradient(135deg, #0ea5e9, #2563eb);">H</div>
-                                        <div>
-                                            <h6 class="mb-0 font-weight-bold text-dark">Hariram</h6>
-                                            <span class="text-muted font-12 font-weight-bold">ID: #112 | Developer</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td><div class="text-dark font-weight-bold"><i class="ti-email text-muted mr-1"></i> hariram@ams.com</div></td>
-                                <td>
+                                    <!-- Here you can add logic later to check if face is actually enrolled. For now, showing active. -->
                                     <span class="badge px-3 py-1 font-12" style="background: #d1fae5; color: #059669; border-radius: 20px;">
-                                        <i class="ti-check mr-1"></i> Face Enrolled
+                                        <i class="ti-check mr-1"></i> Active ID
                                     </span>
                                 </td>
                                 <td>
                                     <span class="badge px-3 py-1 font-12" style="background: #d1fae5; color: #059669; border-radius: 20px;">
-                                        <i class="ti-check mr-1"></i> Synced (ID #02)
+                                        <i class="ti-check mr-1"></i> Synced
                                     </span>
                                 </td>
                                 <td class="text-right">
-                                    <button onclick="openCameraModal('112', 'Hariram')" class="btn btn-scan-face mr-1">
-                                        <i class="ti-reload"></i> Re-Scan Face
+                                    <button onclick="openCameraModal('{{ $emp->id }}', '{{ $emp->name }}')" class="btn btn-scan-face mr-1">
+                                        <i class="ti-reload"></i> Scan / Re-Scan Face
                                     </button>
-                                    <button onclick="registerFingerprint('112', 'Hariram')" class="btn btn-fingerprint">
-                                        <i class="ti-reload"></i> Re-Register
+                                    <button onclick="registerFingerprint('{{ $emp->id }}', '{{ $emp->name }}')" class="btn btn-fingerprint">
+                                        <i class="ti-reload"></i> Fingerprint
                                     </button>
                                 </td>
                             </tr>
-
+                            @empty
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">No employees found in the database. Please add a new employee.</td>
+                            </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -220,43 +195,57 @@
         $('#cameraModal').modal('hide');
     }
 
-    // Real AWS S3 Capture & Upload Logic
+    // Safe JS URL concatenation & Accept JSON Header
     function captureFace() {
         let canvas = document.createElement('canvas');
         canvas.width = video.videoWidth || 640;
         canvas.height = video.videoHeight || 480;
         let ctx = canvas.getContext('2d');
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
+
         let imageDataBase64 = canvas.toDataURL('image/jpeg');
 
         Swal.fire({
             title: 'Uploading to AWS S3...',
-            html: 'Please wait while facial biometrics are securely stored in the cloud.',
+            html: 'Please wait while facial biometrics are securely stored and indexed in the cloud.',
             didOpen: () => { Swal.showLoading() }
         });
 
-        // AJAX POST request to Laravel backend for S3 upload
-        fetch('/admin/upload-face', {
+        // Safely building the URL using JavaScript variable
+        let captureUrl = "/employees/" + activeEmpId + "/capture-face";
+
+        // AJAX POST request to Laravel backend
+        fetch(captureUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json' // Force JSON response
             },
             body: JSON.stringify({
-                employee_id: activeEmpId,
                 image: imageDataBase64
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Server returned status ' + response.status);
+            }
+            return response.json();
+        })
         .then(data => {
             closeCamera();
-            Swal.fire('Success!', 'Face biometrics successfully saved to AWS S3 storage.', 'success');
+            if (data.status) {
+                // Reloads the page after clicking OK
+                Swal.fire('Success!', data.message, 'success').then(() => {
+                    window.location.reload(); 
+                });
+            } else {
+                Swal.fire('Error!', data.message, 'error');
+            }
         })
         .catch(error => {
             closeCamera();
-            // Fallback simulation if route isn't fully set up yet
-            Swal.fire('Saved to Cloud!', 'Face biometrics successfully enrolled and encrypted.', 'success');
+            Swal.fire('Server Error', 'Could not connect to the server. Error: ' + error.message, 'error');
         });
     }
 

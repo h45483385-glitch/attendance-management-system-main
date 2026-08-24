@@ -6,11 +6,14 @@ use App\Models\User;
 use App\Models\Employee;
 use App\Models\Role;
 use App\Models\Schedule;
-use App\Models\SalaryMaster; // புதிதாக இணைக்கப்பட்ட மாடல்
+use App\Models\SalaryMaster; 
+use App\Models\Attendance;
 use App\Http\Requests\EmployeeRec;
 use RealRashid\SweetAlert\Facades\Alert;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Aws\Rekognition\RekognitionClient;
+use Illuminate\Support\Facades\Log;
 
 class EmployeeController extends Controller
 {
@@ -40,8 +43,8 @@ class EmployeeController extends Controller
             SalaryMaster::firstOrCreate(
                 ['designation' => $request->position],
                 [
-                    'department' => 'General', // Default department
-                    'current_base_salary' => 0, // அட்மின் பிறகு செட்டிங்ஸில் அப்டேட் செய்துகொள்ளலாம்
+                    'department' => 'General', 
+                    'current_base_salary' => 0, 
                 ]
             );
         }
@@ -102,7 +105,7 @@ class EmployeeController extends Controller
 
    
     // ======================================================
-    // 📸 FACE CAPTURE MODULE (AWS S3 + DB SYNC READY)
+    // 📸 FACE CAPTURE MODULE (AWS S3 + REKOGNITION INDEXING)
     // ======================================================
     public function captureFace(Request $request, Employee $employee)
     {
@@ -111,7 +114,7 @@ class EmployeeController extends Controller
             // CHECK & FORMAT IMAGE
             // -------------------------
             if (!$request->has('image')) {
-                return response()->json(['status' => false, 'message' => 'No image received']);
+                return response()->json(['status' => false, 'message' => 'No image received.']);
             }
 
             $image = $request->image;
@@ -122,28 +125,59 @@ class EmployeeController extends Controller
             $imageData = base64_decode($image);
 
             if ($imageData === false) {
-                return response()->json(['status' => false, 'message' => 'Invalid image data']);
+                return response()->json(['status' => false, 'message' => 'Invalid image data.']);
             }
 
             // -------------------------
-            // 1. SAVE IN PUBLIC FOLDER (Local Backup)
+            // 1. SAVE TO AWS S3 (Backup)
             // -------------------------
             $safeName = Str::slug($employee->name); 
             $fileName = $safeName . '_' . $employee->id . '_' . time() . '.jpeg';
 
-            // -------------------------
-            // 2. UPLOAD TO AWS S3
-            // -------------------------
             try {
-                \Illuminate\Support\Facades\Storage::disk('s3')->put('faces/' . $fileName, $imageData);
+                Storage::disk('s3')->put('faces/' . $fileName, $imageData);
             } catch (\Exception $s3Exception) {
-                \Illuminate\Support\Facades\Log::error('S3 Upload Failed: ' . $s3Exception->getMessage());
+                Log::error('S3 Upload Failed: ' . $s3Exception->getMessage());
             }
 
             // -------------------------
-            // 3. DATABASE INSERT TRIGGER (Safer Version)
+            // 2. INDEX FACE IN AWS REKOGNITION 
             // -------------------------
-            $attendance = new \App\Models\Attendance();
+            try {
+                $rekognition = new RekognitionClient([
+                    'region'    => env('AWS_DEFAULT_REGION', 'ap-south-1'),
+                    'version'   => 'latest',
+                ]);
+
+                $result = $rekognition->indexFaces([
+                    'CollectionId' => 'pragnaware-employee-faces',
+                    'Image' => [
+                        'Bytes' => $imageData
+                    ],
+                    'ExternalImageId' => (string) $employee->id,
+                    'DetectionAttributes' => ['DEFAULT']
+                ]);
+
+                // 🚀 THE FIX: Check if AWS actually found a face!
+                if (empty($result['FaceRecords'])) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'No Face Detected! Please ensure your face is clearly visible and try again in a well-lit area.'
+                    ]);
+                }
+
+            } catch (\Exception $rekognitionException) {
+                Log::error('AWS Rekognition Indexing Failed: ' . $rekognitionException->getMessage());
+                return response()->json([
+                    'status' => false,
+                    'message' => 'AWS Error: Failed to register face. ' . $rekognitionException->getMessage()
+                ]);
+            }
+
+            // -------------------------
+            // 3. DATABASE INSERT TRIGGER 
+            // -------------------------
+            $attendance = new Attendance();
             $attendance->emp_id = $employee->id;
             $attendance->attendance_date = now()->toDateString();
             $attendance->attendance_time = now()->toTimeString();
@@ -157,15 +191,16 @@ class EmployeeController extends Controller
             // -------------------------
             return response()->json([
                 'status' => true,
-                'message' => 'Face captured, pushed to S3, & Attendance Logged!',
+                'message' => 'Face securely registered and indexed in AWS Rekognition!',
                 'file' => $fileName,
                 'path' => 'faces/' . $fileName
             ]);
 
         } catch (\Exception $e) {
+            Log::error('Face Registration Master Error: ' . $e->getMessage());
             return response()->json([
                 'status' => false,
-                'message' => 'Error: ' . $e->getMessage()
+                'message' => 'Server Error: ' . $e->getMessage()
             ]);
         }
     }

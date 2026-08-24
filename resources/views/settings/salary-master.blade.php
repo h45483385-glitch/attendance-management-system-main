@@ -48,53 +48,12 @@
                                 @endif
                             </td>
                             <td class="align-middle text-end">
-                                <button class="btn btn-sm btn-outline-primary fw-bold rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editSalaryModal{{ $sal->id }}">
+                                <!-- பட்டன் இப்போது பக்காவாக வேலை செய்யும் (data-toggle and data-bs-toggle added for cross compatibility) -->
+                                <button class="btn btn-sm btn-outline-primary fw-bold rounded-pill px-3" data-toggle="modal" data-target="#editSalaryModal{{ $sal->id }}" data-bs-toggle="modal" data-bs-target="#editSalaryModal{{ $sal->id }}">
                                     <i class="fas fa-edit me-1"></i> Update Salary
                                 </button>
                             </td>
                         </tr>
-
-                        <!-- UPDATE SALARY MODAL -->
-                        <div class="modal fade" id="editSalaryModal{{ $sal->id }}" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content" style="border-radius: 12px; border: none;">
-                                    <div class="modal-header text-white" style="background-color: #5867dd;">
-                                        <h5 class="modal-title fw-bold">Update Salary: {{ $sal->designation }}</h5>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <form action="{{ route('salary.master.update', $sal->id) }}" method="POST">
-                                        @csrf
-                                        <div class="modal-body p-4 bg-light">
-                                            
-                                            <div class="mb-3">
-                                                <label class="form-label fw-bold text-muted small text-uppercase">New Base Salary (₹)</label>
-                                                <input type="number" name="new_salary" class="form-control fw-bold" value="{{ $sal->current_base_salary }}" required style="font-size: 18px; color: #5867dd;">
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label class="form-label fw-bold text-muted small text-uppercase">Effective Date (Timer)</label>
-                                                <select name="effective_timer" class="form-select fw-bold" onchange="toggleCustomDate(this, {{ $sal->id }})">
-                                                    <option value="next_month">Next Month 1st (Recommended)</option>
-                                                    <option value="immediate">Immediate (Applies to current payroll)</option>
-                                                    <option value="custom">Custom Date</option>
-                                                </select>
-                                                <small class="text-danger mt-1 d-block"><i class="fas fa-info-circle me-1"></i> Prevents confusion with recently processed payrolls.</small>
-                                            </div>
-
-                                            <div class="mb-3" id="customDateDiv{{ $sal->id }}" style="display: none;">
-                                                <label class="form-label fw-bold text-muted small text-uppercase">Select Custom Date</label>
-                                                <input type="date" name="custom_date" class="form-control">
-                                            </div>
-
-                                        </div>
-                                        <div class="modal-footer bg-white">
-                                            <button type="button" class="btn btn-light fw-bold" data-bs-dismiss="modal">Cancel</button>
-                                            <button type="submit" class="btn btn-primary fw-bold" style="background-color: #5867dd; border: none;">Set Salary Timer</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
                         @endforeach
                     </tbody>
                 </table>
@@ -102,6 +61,54 @@
         </div>
     </div>
 </div>
+
+<!-- ========================================== -->
+<!-- UPDATE SALARY MODALS (MOVED OUTSIDE TABLE) -->
+<!-- ========================================== -->
+@foreach($salaries as $sal)
+<div class="modal fade" id="editSalaryModal{{ $sal->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header text-white" style="background-color: #5867dd;">
+                <h5 class="modal-title fw-bold">Update Salary: {{ $sal->designation }}</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" style="background:transparent; border:none; font-size:1.5rem;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="{{ route('salary.master.update', $sal->id) }}" method="POST">
+                @csrf
+                <div class="modal-body p-4 bg-light">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small text-uppercase">New Base Salary (₹)</label>
+                        <input type="number" name="new_salary" class="form-control fw-bold" value="{{ $sal->current_base_salary }}" required style="font-size: 18px; color: #5867dd;">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Effective Date (Timer)</label>
+                        <select name="effective_timer" class="form-control fw-bold form-select" onchange="toggleCustomDate(this, {{ $sal->id }})">
+                            <option value="next_month">Next Month 1st (Recommended)</option>
+                            <option value="immediate">Immediate (Applies to current payroll)</option>
+                            <option value="custom">Custom Date</option>
+                        </select>
+                        <small class="text-danger mt-1 d-block"><i class="fas fa-info-circle me-1"></i> Prevents confusion with recently processed payrolls.</small>
+                    </div>
+
+                    <div class="mb-3" id="customDateDiv{{ $sal->id }}" style="display: none;">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Select Custom Date</label>
+                        <input type="date" name="custom_date" class="form-control">
+                    </div>
+
+                </div>
+                <div class="modal-footer bg-white">
+                    <button type="button" class="btn btn-light fw-bold" data-dismiss="modal" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-bold" style="background-color: #5867dd; border: none;">Set Salary Timer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endforeach
 
 <script>
     function toggleCustomDate(selectElement, id) {

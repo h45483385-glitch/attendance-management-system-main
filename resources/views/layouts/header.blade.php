@@ -20,7 +20,8 @@
             <li class="dropdown notification-list">
                 <div class="dropdown notification-list nav-pro-img">
                     <a class="dropdown-toggle nav-link arrow-none waves-effect nav-user" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
-                        <img src="assets/images/PG.png" alt="user" class="rounded-circle">
+                        <!-- இங்குதான் Asset Helper-ஐ இணைத்துள்ளேன் -->
+                        <img src="{{ asset('assets/images/PG.png') }}" alt="user" class="rounded-circle" onerror="this.src='https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff';">
                     </a>
                     <div class="dropdown-menu dropdown-menu-right profile-dropdown ">
                         <a class="dropdown-item text-danger" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">

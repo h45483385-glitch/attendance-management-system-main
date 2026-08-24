@@ -6,7 +6,8 @@ use Illuminate\Http\Request;
 use Aws\Rekognition\RekognitionClient;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB; 
-use Carbon\Carbon; // <-- CRITICAL: Required for the 2-hour break math
+use Carbon\Carbon;
+use App\Models\Employee; // <-- THE FIX: Added Employee Model to check if user exists
 
 class FaceController extends Controller
 {
@@ -40,6 +41,19 @@ class FaceController extends Controller
             if (!empty($result['FaceMatches'])) {
                 
                 $employeeId = $result['FaceMatches'][0]['Face']['ExternalImageId'];
+                
+                // =========================================================
+                // 🚀 THE FIX: Check if Employee actually exists in Database!
+                // =========================================================
+                $employeeExists = Employee::find($employeeId);
+                
+                if (!$employeeExists) {
+                    return response()->json([
+                        'success' => false, 
+                        'message' => 'Unrecognized Face / Employee ID (' . $employeeId . ') not found in database.'
+                    ]);
+                }
+                
                 $today = Carbon::today()->toDateString();
                 $currentTime = Carbon::now()->toTimeString();
 
@@ -55,7 +69,7 @@ class FaceController extends Controller
                     // ACTION: CHECK-IN (Returning to work)
                     // ==========================================
                     $newState = 1; 
-                    $statusMessage = 'Face Verified! Check-IN successful for Employee ID: ' . $employeeId;
+                    $statusMessage = 'Face Verified! Check-IN successful for: ' . $employeeExists->name;
                     
                     // Create new attendance row
                     DB::table('attendances')->insert([
@@ -70,7 +84,6 @@ class FaceController extends Controller
                     ]);
 
                     // --- MNC BREAK LOGIC: CLOSING THE BREAK ---
-                    // If they had a checkout earlier, calculate the gap
                     if ($lastRecord && $lastRecord->state == 0) {
                         $openBreak = DB::table('break_logs')
                             ->where('attendance_id', $lastRecord->id)
@@ -82,7 +95,7 @@ class FaceController extends Controller
                             $breakEnd = Carbon::now();
                             $durationMinutes = $breakStart->diffInMinutes($breakEnd);
 
-                            // MNC Rule: Only count as a break if it's less than or equal to 2 hours (120 mins)
+                            // MNC Rule: Only count as a break if it's <= 120 mins
                             if ($durationMinutes <= 120) {
                                 DB::table('break_logs')
                                     ->where('id', $openBreak->id)
@@ -91,7 +104,6 @@ class FaceController extends Controller
                                         'updated_at' => now()
                                     ]);
                             } else {
-                                // If it's over 2 hours, they likely went home for the day. Delete the false break.
                                 DB::table('break_logs')->where('id', $openBreak->id)->delete();
                             }
                         }
@@ -102,7 +114,7 @@ class FaceController extends Controller
                     // ACTION: CHECK-OUT (Leaving for break or home)
                     // ==========================================
                     $newState = 0; 
-                    $statusMessage = 'Face Verified! Check-OUT successful for Employee ID: ' . $employeeId;
+                    $statusMessage = 'Face Verified! Check-OUT successful for: ' . $employeeExists->name;
                     
                     // Stamp the checkout time
                     DB::table('attendances')
@@ -114,13 +126,11 @@ class FaceController extends Controller
                         ]);
 
                     // --- MNC BREAK LOGIC: STARTING THE BREAK ---
-                    // If they check out before 4:00 PM, we assume they are going on break. 
-                    // This lights up the yellow "Currently on Break" card on the dashboard!
                     $currentHour = Carbon::now()->hour;
                     if ($currentHour < 16) { 
                         DB::table('break_logs')->insert([
                             'attendance_id' => $lastRecord->id,
-                            'emp_id' => $employeeId, // <-- THE FIX IS RIGHT HERE!
+                            'emp_id' => $employeeId,
                             'break_start' => Carbon::now()->toDateTimeString(),
                             'break_end' => null,
                             'created_at' => now(),

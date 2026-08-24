@@ -51,7 +51,7 @@
         .status {
             margin-top: 10px;
             font-size: 14px;
-            color: green;
+            font-weight: bold;
         }
 
         .pulse {
@@ -71,7 +71,7 @@
 <div class="card">
     <h2>📸 Employee Face Capture</h2>
 
-    <video id="video" autoplay></video>
+    <video id="video" autoplay playsinline></video>
 
     <button class="btn pulse" onclick="capture()">Capture Face</button>
 
@@ -83,53 +83,68 @@
 <script>
 let video = document.getElementById('video');
 let statusBox = document.getElementById('status');
+let mediaStream = null;
 
 // Start camera
 navigator.mediaDevices.getUserMedia({ video: true })
 .then(stream => {
+    mediaStream = stream;
     video.srcObject = stream;
 })
 .catch(err => {
-    statusBox.innerHTML = "Camera access denied!";
+    statusBox.innerHTML = "❌ Camera access denied!";
     statusBox.style.color = "red";
 });
 
 function capture() {
-
     let canvas = document.getElementById('canvas');
     let context = canvas.getContext('2d');
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
 
     context.drawImage(video, 0, 0);
 
     let image = canvas.toDataURL('image/jpeg');
 
-    statusBox.innerHTML = "Processing...";
+    statusBox.innerHTML = "⏳ Processing and uploading to AWS...";
+    statusBox.style.color = "#f59e0b";
 
     fetch("{{ route('employees.capture.face', $employee->id) }}", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "X-CSRF-TOKEN": "{{ csrf_token() }}"
+            "X-CSRF-TOKEN": "{{ csrf_token() }}",
+            "Accept": "application/json"
         },
         body: JSON.stringify({ image: image })
     })
-    .then(res => res.json())
+    .then(res => {
+        if (!res.ok) {
+            throw new Error('Server returned status ' + res.status);
+        }
+        return res.json();
+    })
     .then(data => {
-
         if(data.status) {
-            statusBox.innerHTML = "✔ Face captured successfully!";
+            statusBox.innerHTML = "✔ " + data.message;
             statusBox.style.color = "green";
+            
+            // Stop camera and reload page after 2 seconds
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+            }
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+
         } else {
             statusBox.innerHTML = "❌ " + data.message;
             statusBox.style.color = "red";
         }
-
     })
-    .catch(() => {
-        statusBox.innerHTML = "Server error!";
+    .catch((error) => {
+        statusBox.innerHTML = "❌ Server error! Check backend route. Error: " + error.message;
         statusBox.style.color = "red";
     });
 }
