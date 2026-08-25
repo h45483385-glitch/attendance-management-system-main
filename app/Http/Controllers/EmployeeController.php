@@ -25,14 +25,14 @@ class EmployeeController extends Controller
         ]);
     }
 
-    // 🚀 THE FIX: Modified store function to create both User (Login) and Employee
     public function store(Request $request)
     {
         // 1. Validate Input
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email', // ஈமெயில் users டேபிளில் புதிதாக இருக்க வேண்டும்
-            'pin_code' => 'required|min:4'
+            'email' => 'required|email|unique:users,email',
+            'pin_code' => 'required|min:4',
+            'schedule' => 'required'
         ]);
 
         // 2. CREATE LOGIN ACCOUNT IN 'users' TABLE
@@ -41,7 +41,6 @@ class EmployeeController extends Controller
         $user->email = $request->email;
         $user->password = bcrypt($request->pin_code);
         
-        // ஆட்டோமேட்டிக்காக Role-ஐ கண்டுபிடித்து செட் செய்வது
         $position = strtolower($request->position ?? '');
         if (str_contains($position, 'admin')) {
             $user->role = 'admin';
@@ -73,6 +72,7 @@ class EmployeeController extends Controller
             );
         }
 
+        // 4. LINK SCHEDULE / SHIFT
         if ($request->schedule) {
             $schedule = Schedule::whereSlug($request->schedule)->first();
             if($schedule){
@@ -80,7 +80,7 @@ class EmployeeController extends Controller
             }
         }
 
-        flash()->success('Success', 'Employee Account & Login Access Created Successfully!');
+        flash()->success('Success', 'Employee Account, Shift Assignment & Login Access Created Successfully!');
 
         return redirect()->route('employees.index')->with('success');
     }
@@ -112,7 +112,9 @@ class EmployeeController extends Controller
             $employee->schedules()->detach();
 
             $schedule = Schedule::whereSlug($request->schedule)->first();
-            $employee->schedules()->attach($schedule);
+            if($schedule){
+                $employee->schedules()->attach($schedule);
+            }
         }
 
         flash()->success('Success', 'Employee Record has been Updated successfully !');
@@ -120,11 +122,24 @@ class EmployeeController extends Controller
         return redirect()->route('employees.index')->with('success');
     }
 
+    // ======================================================
+    // 🚀 CASCADE DELETE PIPELINE (Deletes User, Attendance & Profile)
+    // ======================================================
     public function destroy(Employee $employee)
     {
+        // 1. Delete associated login account from 'users' table using email
+        User::where('email', $employee->email)->delete();
+
+        // 2. Delete all attendance records associated with this employee
+        Attendance::where('emp_id', $employee->id)->delete();
+
+        // 3. Detach schedule relationships
+        $employee->schedules()->detach();
+
+        // 4. Finally delete the employee profile record
         $employee->delete();
 
-        flash()->success('Success', 'Employee Record has been Deleted successfully !');
+        flash()->success('Success', 'Employee Account, Attendance Logs & Profile Deleted Successfully!');
 
         return redirect()->route('employees.index')->with('success');
     }
@@ -184,7 +199,6 @@ class EmployeeController extends Controller
                     'DetectionAttributes' => ['DEFAULT']
                 ]);
 
-                // 🚀 THE FIX: Check if AWS actually found a face!
                 if (empty($result['FaceRecords'])) {
                     return response()->json([
                         'status' => false,

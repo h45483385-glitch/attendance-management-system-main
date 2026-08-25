@@ -9,12 +9,18 @@
 
     .avatar-box { width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; color: white; background: linear-gradient(135deg, #4f46e5, #3b82f6); box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2); }
 
-    /* Action Buttons Customization */
-    .btn-scan-face { background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; font-weight: 600; border-radius: 8px; padding: 6px 12px; font-size: 12px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); transition: all 0.2s; }
-    .btn-scan-face:hover { transform: translateY(-2px); color: white; }
+    /* Uniform Action Buttons Customization */
+    .biometric-actions-group { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+    .btn-action-custom { width: 160px; text-align: center; border: none; font-weight: 600; border-radius: 8px; padding: 7px 10px; font-size: 12px; transition: all 0.2s; color: white !important; }
+    
+    .btn-scan-face { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+    .btn-scan-face:hover { transform: translateY(-2px); }
 
-    .btn-fingerprint { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; font-weight: 600; border-radius: 8px; padding: 6px 12px; font-size: 12px; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); transition: all 0.2s; }
-    .btn-fingerprint:hover { transform: translateY(-2px); color: white; }
+    .btn-fingerprint { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); }
+    .btn-fingerprint:hover { transform: translateY(-2px); }
+
+    .btn-delete-emp { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
+    .btn-delete-emp:hover { transform: translateY(-2px); }
 
     /* Camera Modal Custom CSS */
     .camera-frame { width: 100%; height: 350px; background: #000; border-radius: 12px; overflow: hidden; position: relative; border: 4px solid #e2e8f0; }
@@ -78,7 +84,7 @@
                         <p class="text-muted font-13 mb-0">Manage staff details, configure face recognition, and sync fingerprints.</p>
                     </div>
                     <div>
-                        <!-- 🚀 THE FIX: Added data-toggle and data-target to open the Add Employee Modal -->
+                        <!-- Add New Employee Button -->
                         <button class="btn btn-primary font-weight-bold px-4 rounded-pill shadow-sm" data-toggle="modal" data-target="#addEmployeeModal">
                             <i class="ti-plus mr-2"></i> Add New Employee
                         </button>
@@ -94,7 +100,7 @@
                                 <th>Contact Details</th>
                                 <th>Face ID Status</th>
                                 <th>Fingerprint Status</th>
-                                <th class="text-right" style="min-width: 180px;">Biometric Actions</th>
+                                <th class="text-right" style="min-width: 200px;">Biometric Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -124,12 +130,22 @@
                                     </span>
                                 </td>
                                 <td class="text-right">
-                                    <button onclick="openCameraModal('{{ $emp->id }}', '{{ $emp->name }}')" class="btn btn-scan-face mr-1">
-                                        <i class="ti-reload"></i> Scan / Re-Scan Face
-                                    </button>
-                                    <button onclick="registerFingerprint('{{ $emp->id }}', '{{ $emp->name }}')" class="btn btn-fingerprint">
-                                        <i class="ti-reload"></i> Fingerprint
-                                    </button>
+                                    <div class="biometric-actions-group">
+                                        <button onclick="openCameraModal('{{ $emp->id }}', '{{ $emp->name }}')" class="btn btn-action-custom btn-scan-face">
+                                            <i class="ti-reload mr-1"></i> Scan / Re-Scan
+                                        </button>
+                                        <button onclick="registerFingerprint('{{ $emp->id }}', '{{ $emp->name }}')" class="btn btn-action-custom btn-fingerprint">
+                                            <i class="ti-reload mr-1"></i> Fingerprint
+                                        </button>
+                                        <!-- Cascade Delete Form Trigger -->
+                                        <form action="{{ route('employees.destroy', $emp->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this employee? This will remove their login, attendance, and all records.');" style="display:inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-action-custom btn-delete-emp">
+                                                <i class="ti-trash mr-1"></i> Delete Employee
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                             @empty
@@ -147,13 +163,13 @@
 </div>
 
 <!-- ==============================================
-     1. ADD NEW EMPLOYEE MODAL (The Fix)
+     1. ADD NEW EMPLOYEE MODAL (With Shift Dropdown)
 =============================================== -->
 <div class="modal fade" id="addEmployeeModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header bg-light" style="border-radius: 12px 12px 0 0;">
-                <h5 class="modal-title font-weight-bold text-dark"><i class="ti-user text-primary mr-2"></i> Add New Employee</h5>
+                <h5 class="modal-title font-weight-bold text-dark"><i class="ti-user text-primary mr-2"></i> Add New Employee & Assign Shift</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -171,8 +187,22 @@
                     </div>
                     <div class="form-group mb-3">
                         <label class="font-weight-bold text-muted">Job Position / Role</label>
-                        <input type="text" name="position" class="form-control" placeholder="e.g. Developer, Receptionist">
+                        <input type="text" name="position" class="form-control" placeholder="e.g. Junior Developer, Receptionist">
                     </div>
+
+                    <!-- Shift & Schedule Dropdown -->
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold text-muted">Work Schedule / Shift <span class="text-danger">*</span></label>
+                        <select name="schedule" class="form-control" required>
+                            <option value="">-- Select Shift --</option>
+                            @isset($schedules)
+                                @foreach($schedules as $sched)
+                                    <option value="{{ $sched->slug }}">{{ $sched->name ?? $sched->slug }} ({{ $sched->time_in ?? '09:00' }} - {{ $sched->time_out ?? '18:00' }})</option>
+                                @endforeach
+                            @endisset
+                        </select>
+                    </div>
+
                     <div class="form-group mb-3">
                         <label class="font-weight-bold text-muted">PIN Code (Password) <span class="text-danger">*</span></label>
                         <input type="password" name="pin_code" class="form-control" required placeholder="Create a secure PIN or password">
@@ -180,7 +210,7 @@
                 </div>
                 <div class="modal-footer border-0 bg-light" style="border-radius: 0 0 12px 12px;">
                     <button type="button" class="btn btn-secondary font-weight-bold" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary font-weight-bold px-4">Save Employee</button>
+                    <button type="submit" class="btn btn-primary font-weight-bold px-4">Save & Link Pipeline</button>
                 </div>
             </form>
         </div>
@@ -248,7 +278,6 @@
         $('#cameraModal').modal('hide');
     }
 
-    // Safe JS URL concatenation & Accept JSON Header
     function captureFace() {
         let canvas = document.createElement('canvas');
         canvas.width = video.videoWidth || 640;
@@ -264,16 +293,14 @@
             didOpen: () => { Swal.showLoading() }
         });
 
-        // Safely building the URL using JavaScript variable
         let captureUrl = "/employees/" + activeEmpId + "/capture-face";
 
-        // AJAX POST request to Laravel backend
         fetch(captureUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json' // Force JSON response
+                'Accept': 'application/json'
             },
             body: JSON.stringify({
                 image: imageDataBase64
@@ -288,7 +315,6 @@
         .then(data => {
             closeCamera();
             if (data.status) {
-                // Reloads the page after clicking OK
                 Swal.fire('Success!', data.message, 'success').then(() => {
                     window.location.reload(); 
                 });

@@ -10,7 +10,7 @@ class SalaryMasterController extends Controller
 {
     public function index()
     {
-        // UI-ல் காட்டுவதற்காக முதல் முறையாக டம்மி டிபார்ட்மென்ட் டேட்டாவை நாமே உருவாக்குவோம்
+        // UI-ல் காட்டுவதற்காக முதல் முறையாக டம்மி டிபார்ட்மென்ட் டேட்டாவை உருவாக்குதல்
         if(SalaryMaster::count() == 0) {
             SalaryMaster::insert([
                 ['department' => 'Engineering', 'designation' => 'Intern', 'current_base_salary' => 15000],
@@ -31,22 +31,19 @@ class SalaryMasterController extends Controller
         
         $effectiveDate = null;
         
-        // நீங்கள் கேட்ட டைமர் லாஜிக் (Timer Logic)
         if($timerOption == 'immediate') {
             $effectiveDate = Carbon::now()->toDateString();
         } elseif($timerOption == 'next_month') {
-            $effectiveDate = Carbon::now()->addMonth()->startOfMonth()->toDateString(); // அடுத்த மாதம் 1-ஆம் தேதி
+            $effectiveDate = Carbon::now()->addMonth()->startOfMonth()->toDateString(); 
         } else {
             $effectiveDate = $request->input('custom_date');
         }
 
         if($timerOption == 'immediate') {
-            // உடனே அமலுக்கு வந்தால் தற்போதைய சம்பளத்தையே மாற்றிவிடுவோம்
             $salary->current_base_salary = $newSalary;
             $salary->scheduled_salary = null;
             $salary->effective_date = null;
         } else {
-            // டைமர் செட் செய்தால், அதை Scheduled-ல் வைப்போம் (Cron job மூலம் மாறும்)
             $salary->scheduled_salary = $newSalary;
             $salary->effective_date = $effectiveDate;
         }

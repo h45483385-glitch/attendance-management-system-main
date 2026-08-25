@@ -35,40 +35,70 @@
         </div>
         
         <div class="card-body p-0">
-            <div class="border-bottom p-4 d-flex justify-content-between align-items-center bg-white" data-toggle="collapse" data-bs-toggle="collapse" data-target="#dept-admin" data-bs-target="#dept-admin" style="cursor: pointer;">
-                <div class="d-flex align-items-center">
-                    <div class="me-3"><i class="fas fa-briefcase text-primary" style="font-size: 24px;"></i></div>
-                    <div>
-                        <h5 class="mb-1 text-dark" style="font-weight: 700; font-size: 17px;">Administrator</h5>
-                        <div class="text-muted small"><i class="fas fa-user me-1"></i> 1 Employees</div>
-                    </div>
-                </div>
-                <div class="d-flex align-items-center">
-                    <div class="text-end me-4">
-                        <div class="fw-bold text-danger mb-1" style="font-size: 14px;">0% Generated</div>
-                        <div class="progress" style="height: 5px; width: 120px; background-color: #f8d7da;"><div class="progress-bar bg-danger" style="width: 0%"></div></div>
-                    </div>
-                    <i class="fas fa-chevron-down text-muted" style="font-size: 18px;"></i>
-                </div>
-            </div>
-            
-            <div id="dept-admin" class="collapse show" style="background-color: #f8f9fa;">
-                <div class="p-4 border-bottom d-flex justify-content-between align-items-center" style="padding-left: 60px !important;">
+            @php
+                // டிபார்ட்மென்ட் வாரியாக எம்ப்ளாயிக்களைப் பிரித்தல்
+                $allDepartments = \App\Models\SalaryMaster::select('department')->distinct()->pluck('department');
+                if($allDepartments->isEmpty()) {
+                    $allDepartments = collect(['General', 'Engineering']);
+                }
+            @endphp
+
+            @foreach($allDepartments as $index => $dept)
+                @php
+                    // அந்த டிபார்ட்மென்ட்டுக்குரிய designations-ஐ எடுத்தல்
+                    $designations = \App\Models\SalaryMaster::where('department', $dept)->pluck('designation');
+                    
+                    // அந்த designations-ல் உள்ள எம்ப்ளாயிக்களை வடிகட்டுதல்
+                    $deptEmployees = $employees->filter(function($emp) use ($designations) {
+                        return $designations->contains(function($des) use ($emp) {
+                            return strcasecmp(trim($des), trim($emp->position)) === 0;
+                        });
+                    });
+                @endphp
+
+                @if($deptEmployees->count() > 0)
+                <div class="border-bottom p-4 d-flex justify-content-between align-items-center bg-white" data-toggle="collapse" data-bs-toggle="collapse" data-target="#dept-{{ $index }}" data-bs-target="#dept-{{ $index }}" style="cursor: pointer;">
                     <div class="d-flex align-items-center">
-                        <div class="me-3"><div style="width: 35px; height: 35px; background-color: #e0e7ff; color: #5867dd; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;"><i class="fas fa-user-circle"></i></div></div>
+                        <div class="me-3"><i class="fas fa-briefcase text-primary" style="font-size: 24px;"></i></div>
                         <div>
-                            <h6 class="mb-0 fw-bold" style="color: #5867dd; font-size: 15px;">Admin User</h6>
-                            <small class="text-muted">ID: #111</small>
+                            <h5 class="mb-1 text-dark" style="font-weight: 700; font-size: 17px;">{{ $dept }}</h5>
+                            <div class="text-muted small"><i class="fas fa-user me-1"></i> {{ $deptEmployees->count() }} Employees</div>
                         </div>
                     </div>
-                    <div>
-                        <!-- fetchPayData(111) is called here -->
-                        <button class="btn btn-sm text-white rounded-pill px-3 py-2 shadow-sm" style="background-color: #5867dd; font-weight: 600;" onclick="fetchPayData(111)" data-toggle="modal" data-bs-toggle="modal" data-target="#payslipModal" data-bs-target="#payslipModal">
-                            <i class="fas fa-file-invoice-dollar me-1"></i> Review & Generate Payslip
-                        </button>
+                    <div class="d-flex align-items-center">
+                        <div class="text-end me-4">
+                            <div class="fw-bold text-danger mb-1" style="font-size: 14px;">0% Generated</div>
+                            <div class="progress" style="height: 5px; width: 120px; background-color: #f8d7da;"><div class="progress-bar bg-danger" style="width: 0%"></div></div>
+                        </div>
+                        <i class="fas fa-chevron-down text-muted" style="font-size: 18px;"></i>
                     </div>
                 </div>
-            </div>
+                
+                <div id="dept-{{ $index }}" class="collapse @if($index == 0) show @endif" style="background-color: #f8f9fa;">
+                    @foreach($deptEmployees as $emp)
+                    <div class="p-4 border-bottom d-flex justify-content-between align-items-center" style="padding-left: 60px !important;">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <div style="width: 35px; height: 35px; background-color: #e0e7ff; color: #5867dd; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                    {{ strtoupper(substr($emp->name, 0, 1)) }}
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold" style="color: #5867dd; font-size: 15px;">{{ $emp->name }}</h6>
+                                <small class="text-muted">ID: #{{ $emp->id }} | Position: {{ $emp->position }}</small>
+                            </div>
+                        </div>
+                        <div>
+                            <!-- Dynamic Employee ID passed to fetchPayData -->
+                            <button class="btn btn-sm text-white rounded-pill px-3 py-2 shadow-sm" style="background-color: #5867dd; font-weight: 600;" onclick="fetchPayData('{{ $emp->id }}')" data-toggle="modal" data-bs-toggle="modal" data-target="#payslipModal" data-bs-target="#payslipModal">
+                                <i class="fas fa-file-invoice-dollar me-1"></i> Review & Generate Payslip
+                            </button>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+                @endif
+            @endforeach
         </div>
     </div>
 </div>
@@ -78,7 +108,7 @@
     <div class="modal-dialog modal-lg" style="max-width: 850px;"> 
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header text-white" style="background-color: #2c3e50; border-top-left-radius: 12px; border-top-right-radius: 12px;">
-                <h5 class="modal-title fw-bold"><i class="fas fa-file-invoice me-2"></i> Payroll Summary - #111</h5>
+                <h5 class="modal-title fw-bold" id="modalPayslipTitle"><i class="fas fa-file-invoice me-2"></i> Payroll Summary</h5>
                 <button type="button" class="btn-close btn-close-white" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4 bg-light">
@@ -198,7 +228,6 @@
                 let deduct = Math.round(perDay * absent);
                 let net = gross - deduct;
                 
-                // புதிய பெர்-டே வேஜ் ஃபீல்டு அப்டேட்
                 document.getElementById('per_day_salary').value = perDay.toFixed(2);
                 document.getElementById('deductions').value = deduct;
                 document.getElementById('net_salary').value = net;
@@ -206,24 +235,21 @@
         });
     });
 
-    // ==============================================================
-    // 🚀 NEW AJAX FETCH LOGIC (PIPELINE 3)
-    // ==============================================================
+    // 🚀 DYNAMIC AJAX FETCH LOGIC
     function fetchPayData(employeeId) {
-        // Fetch API மூலம் நாம் உருவாக்கிய Route-ஐ அழைக்கிறது
         fetch(`/pay-report/fetch/${employeeId}`)
             .then(response => response.json())
             .then(data => {
                 if(data.success) {
-                    // Salary Master-ல் இருந்து வந்த Base Salary-யை நிரப்புகிறோம்
+                    // Update Modal Title dynamically with employee name and ID
+                    document.getElementById('modalPayslipTitle').innerHTML = `<i class="fas fa-file-invoice me-2"></i> Payroll Summary - #${employeeId} (${data.employee_name} - ${data.position})`;
+                    
                     let grossInput = document.getElementById('gross_salary');
                     grossInput.value = data.base_salary;
                     
-                    // மேலேயுள்ள கால்குலேஷன் லாஜிக்கை ஆட்டோமேட்டிக்காகத் தூண்டிவிடுகிறோம் (Trigger)
                     grossInput.dispatchEvent(new Event('input', { bubbles: true }));
                 } else {
                     console.log('Error:', data.message);
-                    // எம்ப்ளாயி கிடைக்கவில்லை என்றால் 0 ஆக்கி விடுகிறோம்
                     let grossInput = document.getElementById('gross_salary');
                     grossInput.value = 0;
                     grossInput.dispatchEvent(new Event('input', { bubbles: true }));
