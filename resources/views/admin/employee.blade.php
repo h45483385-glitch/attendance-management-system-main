@@ -59,6 +59,15 @@
             </div>
         </div>
 
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="border-radius: 8px;">
+                <strong>Success!</strong> {{ session('success') }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        @endif
+
         <!-- MAIN EMPLOYEE & BIOMETRIC DIRECTORY -->
         <div class="card staff-card mb-4">
             <div class="card-body p-4">
@@ -69,7 +78,10 @@
                         <p class="text-muted font-13 mb-0">Manage staff details, configure face recognition, and sync fingerprints.</p>
                     </div>
                     <div>
-                        <button class="btn btn-primary font-weight-bold px-4 rounded-pill shadow-sm"><i class="ti-plus mr-2"></i> Add New Employee</button>
+                        <!-- 🚀 THE FIX: Added data-toggle and data-target to open the Add Employee Modal -->
+                        <button class="btn btn-primary font-weight-bold px-4 rounded-pill shadow-sm" data-toggle="modal" data-target="#addEmployeeModal">
+                            <i class="ti-plus mr-2"></i> Add New Employee
+                        </button>
                     </div>
                 </div>
 
@@ -82,7 +94,8 @@
                                 <th>Contact Details</th>
                                 <th>Face ID Status</th>
                                 <th>Fingerprint Status</th>
-<th class="text-right" style="min-width: 180px;">Biometric Actions</th>                            </tr>
+                                <th class="text-right" style="min-width: 180px;">Biometric Actions</th>
+                            </tr>
                         </thead>
                         <tbody>
                             <!-- DYNAMIC EMPLOYEE ROWS FROM DATABASE -->
@@ -101,7 +114,6 @@
                                 </td>
                                 <td><div class="text-dark font-weight-bold"><i class="ti-email text-muted mr-1"></i> {{ $emp->email }}</div></td>
                                 <td>
-                                    <!-- Here you can add logic later to check if face is actually enrolled. For now, showing active. -->
                                     <span class="badge px-3 py-1 font-12" style="background: #d1fae5; color: #059669; border-radius: 20px;">
                                         <i class="ti-check mr-1"></i> Active ID
                                     </span>
@@ -135,7 +147,48 @@
 </div>
 
 <!-- ==============================================
-     LIVE CAMERA SCAN MODAL WITH S3 UPLOAD
+     1. ADD NEW EMPLOYEE MODAL (The Fix)
+=============================================== -->
+<div class="modal fade" id="addEmployeeModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header bg-light" style="border-radius: 12px 12px 0 0;">
+                <h5 class="modal-title font-weight-bold text-dark"><i class="ti-user text-primary mr-2"></i> Add New Employee</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="{{ route('employees.store') }}" method="POST">
+                @csrf
+                <div class="modal-body p-4">
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold text-muted">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" required placeholder="Enter employee name">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold text-muted">Email Address <span class="text-danger">*</span></label>
+                        <input type="email" name="email" class="form-control" required placeholder="Enter valid email">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold text-muted">Job Position / Role</label>
+                        <input type="text" name="position" class="form-control" placeholder="e.g. Developer, Receptionist">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold text-muted">PIN Code (Password) <span class="text-danger">*</span></label>
+                        <input type="password" name="pin_code" class="form-control" required placeholder="Create a secure PIN or password">
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light" style="border-radius: 0 0 12px 12px;">
+                    <button type="button" class="btn btn-secondary font-weight-bold" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary font-weight-bold px-4">Save Employee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==============================================
+     2. LIVE CAMERA SCAN MODAL WITH S3 UPLOAD
 =============================================== -->
 <div class="modal fade" id="cameraModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
     <div class="modal-dialog modal-dialog-centered" role="document">

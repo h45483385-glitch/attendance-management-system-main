@@ -25,13 +25,37 @@ class EmployeeController extends Controller
         ]);
     }
 
-    public function store(EmployeeRec $request)
+    // 🚀 THE FIX: Modified store function to create both User (Login) and Employee
+    public function store(Request $request)
     {
-        $request->validated();
+        // 1. Validate Input
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email', // ஈமெயில் users டேபிளில் புதிதாக இருக்க வேண்டும்
+            'pin_code' => 'required|min:4'
+        ]);
 
+        // 2. CREATE LOGIN ACCOUNT IN 'users' TABLE
+        $user = new User;
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->password = bcrypt($request->pin_code);
+        
+        // ஆட்டோமேட்டிக்காக Role-ஐ கண்டுபிடித்து செட் செய்வது
+        $position = strtolower($request->position ?? '');
+        if (str_contains($position, 'admin')) {
+            $user->role = 'admin';
+        } elseif (str_contains($position, 'reception') || str_contains($position, 'security')) {
+            $user->role = 'receptionist';
+        } else {
+            $user->role = 'employee';
+        }
+        $user->save();
+
+        // 3. CREATE PROFILE IN 'employees' TABLE
         $employee = new Employee;
         $employee->name = $request->name;
-        $employee->position = $request->position;
+        $employee->position = $request->position ?? 'Staff';
         $employee->email = $request->email;
         $employee->pin_code = bcrypt($request->pin_code);
         $employee->save();
@@ -51,10 +75,12 @@ class EmployeeController extends Controller
 
         if ($request->schedule) {
             $schedule = Schedule::whereSlug($request->schedule)->first();
-            $employee->schedules()->attach($schedule);
+            if($schedule){
+                $employee->schedules()->attach($schedule);
+            }
         }
 
-        flash()->success('Success', 'Employee Record has been created successfully !');
+        flash()->success('Success', 'Employee Account & Login Access Created Successfully!');
 
         return redirect()->route('employees.index')->with('success');
     }
