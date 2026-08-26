@@ -36,7 +36,6 @@
         
         <div class="card-body p-0">
             @php
-                // டிபார்ட்மென்ட் வாரியாக எம்ப்ளாயிக்களைப் பிரித்தல்
                 $allDepartments = \App\Models\SalaryMaster::select('department')->distinct()->pluck('department');
                 if($allDepartments->isEmpty()) {
                     $allDepartments = collect(['General', 'Engineering']);
@@ -45,10 +44,8 @@
 
             @foreach($allDepartments as $index => $dept)
                 @php
-                    // அந்த டிபார்ட்மென்ட்டுக்குரிய designations-ஐ எடுத்தல்
                     $designations = \App\Models\SalaryMaster::where('department', $dept)->pluck('designation');
                     
-                    // அந்த designations-ல் உள்ள எம்ப்ளாயிக்களை வடிகட்டுதல்
                     $deptEmployees = $employees->filter(function($emp) use ($designations) {
                         return $designations->contains(function($des) use ($emp) {
                             return strcasecmp(trim($des), trim($emp->position)) === 0;
@@ -89,7 +86,6 @@
                             </div>
                         </div>
                         <div>
-                            <!-- Dynamic Employee ID passed to fetchPayData -->
                             <button class="btn btn-sm text-white rounded-pill px-3 py-2 shadow-sm" style="background-color: #5867dd; font-weight: 600;" onclick="fetchPayData('{{ $emp->id }}')" data-toggle="modal" data-bs-toggle="modal" data-target="#payslipModal" data-bs-target="#payslipModal">
                                 <i class="fas fa-file-invoice-dollar me-1"></i> Review & Generate Payslip
                             </button>
@@ -235,19 +231,30 @@
         });
     });
 
-    // 🚀 DYNAMIC AJAX FETCH LOGIC
+    // 🚀 DYNAMIC AJAX FETCH LOGIC WITH PENALTIES INTEGRATION
     function fetchPayData(employeeId) {
         fetch(`/pay-report/fetch/${employeeId}`)
             .then(response => response.json())
             .then(data => {
                 if(data.success) {
-                    // Update Modal Title dynamically with employee name and ID
                     document.getElementById('modalPayslipTitle').innerHTML = `<i class="fas fa-file-invoice me-2"></i> Payroll Summary - #${employeeId} (${data.employee_name} - ${data.position})`;
                     
                     let grossInput = document.getElementById('gross_salary');
                     grossInput.value = data.base_salary;
                     
                     grossInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+                    // Add Penalties from Time Exceptions to Deductions automatically
+                    if(data.penalties > 0) {
+                        let currentDeductions = parseFloat(document.getElementById('deductions').value) || 0;
+                        let newTotalDeductions = currentDeductions + parseFloat(data.penalties);
+                        
+                        document.getElementById('deductions').value = newTotalDeductions;
+                        
+                        let gross = parseFloat(grossInput.value) || 0;
+                        let net = gross - newTotalDeductions;
+                        document.getElementById('net_salary').value = net;
+                    }
                 } else {
                     console.log('Error:', data.message);
                     let grossInput = document.getElementById('gross_salary');

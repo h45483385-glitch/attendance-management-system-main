@@ -62,11 +62,21 @@
     .form-label { font-weight: 600; color: #475569; }
 </style>
 
+<!-- Success Alert (Real Backend Response) -->
+@if(session('success'))
+<div class="alert alert-success alert-dismissible fade show font-weight-bold" role="alert">
+    <i class="ti-check mr-2"></i> {{ session('success') }}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+@endif
+
 <div class="row">
     
     <!-- 1. Shift Timings Button -->
     <div class="col-md-6 col-lg-3 mb-4">
-        <div class="setting-btn-card" data-toggle="modal" data-bs-toggle="modal" data-target="#shiftModal" data-bs-target="#shiftModal">
+        <div class="setting-btn-card" data-toggle="modal" data-target="#shiftModal">
             <div class="setting-icon-wrapper" style="background-color: #e0e7ff; color: #5867dd;">
                 <i class="ti-time"></i>
             </div>
@@ -77,7 +87,7 @@
 
     <!-- 2. Weekend Configuration Button -->
     <div class="col-md-6 col-lg-3 mb-4">
-        <div class="setting-btn-card" data-toggle="modal" data-bs-toggle="modal" data-target="#weekendModal" data-bs-target="#weekendModal">
+        <div class="setting-btn-card" data-toggle="modal" data-target="#weekendModal">
             <div class="setting-icon-wrapper" style="background-color: #def7ec; color: #20c997;">
                 <i class="ti-calendar"></i>
             </div>
@@ -88,7 +98,7 @@
 
     <!-- 3. Leave Policy Button -->
     <div class="col-md-6 col-lg-3 mb-4">
-        <div class="setting-btn-card" data-toggle="modal" data-bs-toggle="modal" data-target="#leaveModal" data-bs-target="#leaveModal">
+        <div class="setting-btn-card" data-toggle="modal" data-target="#leaveModal">
             <div class="setting-icon-wrapper" style="background-color: #fef3c7; color: #d97706;">
                 <i class="ti-medall"></i>
             </div>
@@ -97,33 +107,31 @@
         </div>
     </div>
 
-    <!-- 4. Payroll & Salary Master (Direct Link Button) -->
+    <!-- 4. Payroll & Salary Master (FIXED: Hover & Black Link Issue) -->
     <div class="col-md-6 col-lg-3 mb-4">
-        <!-- Wraps the card in an anchor tag for direct redirection -->
-        <a href="{{ route('salary.master') }}" style="text-decoration: none; display: block; height: 100%;">
-            <div class="setting-btn-card" style="border: 1px solid #e0e7ff;">
-                <div class="setting-icon-wrapper" style="background-color: #5867dd; color: #ffffff;">
-                    <i class="ti-wallet"></i>
-                </div>
-                <h4 class="setting-btn-title" style="color: #5867dd;">Salary Master</h4>
-                <p class="setting-btn-desc">Configure role-based pay and payroll matrix.</p>
+        <div class="setting-btn-card" onclick="window.location.href='{{ route('salary.master') }}'">
+            <div class="setting-icon-wrapper" style="background-color: #5867dd; color: #ffffff;">
+                <i class="ti-wallet"></i>
             </div>
-        </a>
+            <h4 class="setting-btn-title" style="color: #5867dd;">Salary Master</h4>
+            <p class="setting-btn-desc">Configure role-based pay and payroll matrix.</p>
+        </div>
     </div>
 
 </div>
 
 <!-- ========================================== -->
-<!-- MODALS (POPUPS) FOR THE SETTINGS           -->
+<!-- REAL MODALS (CONNECTED TO BACKEND)         -->
 <!-- ========================================== -->
 
 <!-- 1. Shift Timings Modal -->
 <div class="modal fade" id="shiftModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content">
+        <form action="{{ route('settings.update') }}" method="POST" class="modal-content">
+            @csrf
             <div class="modal-header bg-light">
                 <h5 class="modal-title font-weight-bold"><i class="ti-time text-primary mr-2"></i> Shift Timings & Grace Period</h5>
-                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -131,106 +139,89 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Standard Shift Start</label>
-                        <input type="time" class="form-control" value="09:30">
+                        <input type="time" name="shift_start" class="form-control" value="{{ \Carbon\Carbon::parse($setting->shift_start)->format('H:i') }}" required>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Standard Shift End</label>
-                        <input type="time" class="form-control" value="18:30">
+                        <input type="time" name="shift_end" class="form-control" value="{{ \Carbon\Carbon::parse($setting->shift_end)->format('H:i') }}" required>
                     </div>
                 </div>
                 <div class="mt-3">
                     <label class="form-label text-danger">Arrival Grace Period (Minutes)</label>
                     <p class="text-muted font-13 mb-2">Buffer time before an employee is marked as 'Late'.</p>
-                    <input type="number" class="form-control" value="10">
+                    <input type="number" name="grace_period" class="form-control" value="{{ $setting->grace_period }}" required>
                 </div>
             </div>
             <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary font-weight-bold" onclick="showToastAndClose('shiftModal')">Save Timings</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary font-weight-bold">Save Timings</button>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 
 <!-- 2. Weekend Configuration Modal -->
 <div class="modal fade" id="weekendModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content">
+        <form action="{{ route('settings.update') }}" method="POST" class="modal-content">
+            @csrf
+            <input type="hidden" name="update_weekend" value="1">
             <div class="modal-header bg-light">
                 <h5 class="modal-title font-weight-bold"><i class="ti-calendar text-success mr-2"></i> Weekend Configuration</h5>
-                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body p-4">
                 <p class="text-muted font-14 mb-3">Select the default weekly off days for the company.</p>
                 <div class="custom-control custom-checkbox mb-2">
-                    <input type="checkbox" class="custom-control-input" id="checkSat">
+                    <input type="checkbox" name="is_saturday_off" class="custom-control-input" id="checkSat" {{ $setting->is_saturday_off ? 'checked' : '' }}>
                     <label class="custom-control-label font-weight-bold" for="checkSat">Saturday (Holiday)</label>
                 </div>
                 <div class="custom-control custom-checkbox mb-4">
-                    <input type="checkbox" class="custom-control-input" id="checkSun" checked>
+                    <input type="checkbox" name="is_sunday_off" class="custom-control-input" id="checkSun" {{ $setting->is_sunday_off ? 'checked' : '' }}>
                     <label class="custom-control-label font-weight-bold" for="checkSun">Sunday (Holiday)</label>
                 </div>
             </div>
             <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-success font-weight-bold" onclick="showToastAndClose('weekendModal')">Update Calendar</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-success font-weight-bold">Update Calendar</button>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 
 <!-- 3. Leave Policy Modal -->
 <div class="modal fade" id="leaveModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content">
+        <form action="{{ route('settings.update') }}" method="POST" class="modal-content">
+            @csrf
             <div class="modal-header bg-light">
                 <h5 class="modal-title font-weight-bold"><i class="ti-medall text-warning mr-2"></i> Annual Leave Policy</h5>
-                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body p-4">
                 <div class="mb-3">
                     <label class="form-label">Casual Leaves (CL) per year</label>
-                    <input type="number" class="form-control" value="12">
+                    <input type="number" name="casual_leaves" class="form-control" value="{{ $setting->casual_leaves }}" required>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Medical Leaves (ML) per year</label>
-                    <input type="number" class="form-control" value="6">
+                    <input type="number" name="medical_leaves" class="form-control" value="{{ $setting->medical_leaves }}" required>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Minimum Hours for Full-Day</label>
-                    <input type="number" class="form-control" value="8" placeholder="e.g., 8 Hours">
+                    <input type="number" name="min_full_day_hours" class="form-control" value="{{ $setting->min_full_day_hours }}" required>
                 </div>
             </div>
             <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-warning text-dark font-weight-bold" onclick="showToastAndClose('leaveModal')">Save Leave Rules</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-warning text-dark font-weight-bold">Save Leave Rules</button>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 
-<!-- Simple Toast Notification -->
-<div id="success-toast" class="alert alert-success alert-dismissible fade show" role="alert" style="display: none; position: fixed; bottom: 20px; right: 20px; z-index: 9999; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-    <strong><i class="ti-check mr-1"></i> SUCCESS!</strong> Settings saved successfully.
-    <button type="button" class="close" onclick="document.getElementById('success-toast').style.display='none'">
-        <span aria-hidden="true">&times;</span>
-    </button>
-</div>
-
-<script>
-    // Saves data, hides the specific modal, and shows toast
-    function showToastAndClose(modalId) {
-        // Hiding the modal using jQuery (Bootstrap standard)
-        $('#' + modalId).modal('hide');
-        
-        // Showing Toast
-        const toast = document.getElementById('success-toast');
-        toast.style.display = 'block';
-        setTimeout(() => { toast.style.display = 'none'; }, 3000);
-    }
-</script>
 @endsection

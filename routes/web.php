@@ -1,8 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Employee;
 use Carbon\Carbon;
+
+// Controllers
 use App\Http\Controllers\VisitorController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\EmployeeController;
@@ -13,6 +16,10 @@ use App\Http\Controllers\CheckController;
 use App\Http\Controllers\BiometricDeviceController;
 use App\Http\Controllers\FaceController;
 use App\Http\Controllers\PayReportController;
+use App\Http\Controllers\OvertimeController;
+use App\Http\Controllers\SalaryMasterController;
+use App\Http\Controllers\AdminSecurityController;
+use App\Http\Controllers\SettingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -58,6 +65,17 @@ Route::get('/employees/{employee}/capture', function (Employee $employee) {
 
 /*
 |--------------------------------------------------------------------------
+| DAILY BIOMETRIC KIOSK (ODD/EVEN CHECK-IN TOGGLE)
+|--------------------------------------------------------------------------
+*/
+Route::get('/kiosk', function () {
+    return view('admin.kiosk'); 
+})->name('kiosk.view');
+
+Route::post('/scan-face', [FaceController::class, 'scanFace'])->name('scan.face');
+
+/*
+|--------------------------------------------------------------------------
 | ADMIN ROUTES (PROTECTED)
 |--------------------------------------------------------------------------
 */
@@ -65,45 +83,44 @@ Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin']], function 
 
     // DASHBOARD
     Route::get('/admin', [AdminController::class, 'index'])->name('admin');
+    Route::get('/dashboard', [AttendanceController::class, 'dashboard'])->name('attendance.dashboard');
 
-    Route::get('/dashboard', [AttendanceController::class, 'dashboard'])
-        ->name('attendance.dashboard');
+    // ADMIN SECURITY (OTP)
+    Route::get('/admin/security', [AdminSecurityController::class, 'showChangePasswordForm'])->name('admin.security');
+    Route::post('/admin/security/send-otp', [AdminSecurityController::class, 'sendOtp'])->name('admin.send_otp');
+    Route::post('/admin/security/verify', [AdminSecurityController::class, 'verifyAndUpdate'])->name('admin.verify_update');
 
     // EMPLOYEES
     Route::resource('/employees', EmployeeController::class);
+    Route::get('/employees/create-face', [EmployeeController::class, 'create'])->name('employees.face.create');
 
-    Route::get('/employees/create-face', [EmployeeController::class, 'create'])
-        ->name('employees.face.create');
-
-    // ATTENDANCE
-    Route::get('/attendance', [AttendanceController::class, 'index'])
-        ->name('attendance');
-
-    Route::get('/latetime', [AttendanceController::class, 'indexLatetime'])
-        ->name('latetime');
+    // ATTENDANCE & TIME EXCEPTIONS
+    Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance');
+    Route::get('/latetime', [AttendanceController::class, 'indexLatetime'])->name('latetime');
+    Route::post('/attendance/waive/{id}', [AttendanceController::class, 'waiveLate'])->name('attendance.waive');
+    Route::post('/attendance/penalty/{id}', [AttendanceController::class, 'applyPenalty'])->name('attendance.penalty');
+    
+    // --- MISSED PUNCH / DEFENSE RESOLUTION ROUTES ---
+    Route::post('/api/attendance/resolve/{id}', [AttendanceController::class, 'resolveMissedScan'])->name('api.attendance.resolve');
 
     // --- VISITOR MANAGEMENT (STABLE VERSION) ---
     Route::get('/visitor-checkin', function () {
         return view('admin.visitor_checkin');
     })->name('visitor.checkin');
-
-    Route::post('/visitor/store', [VisitorController::class, 'store'])
-        ->name('visitor.store');
-
-    Route::get('/visitor-logs', [VisitorController::class, 'index'])
-        ->name('admin.visitor_index'); 
-
-    Route::post('/visitor/checkout/{id}', [VisitorController::class, 'checkout'])
-        ->name('visitor.checkout');
-
-    Route::get('/visitor-download', [VisitorController::class, 'downloadReport'])
-        ->name('visitor.export'); 
+    Route::post('/visitor/store', [VisitorController::class, 'store'])->name('visitor.store');
+    Route::get('/visitor-logs', [VisitorController::class, 'index'])->name('admin.visitor_index'); 
+    Route::post('/visitor/checkout/{id}', [VisitorController::class, 'checkout'])->name('visitor.checkout');
+    Route::get('/visitor-download', [VisitorController::class, 'downloadReport'])->name('visitor.export'); 
+    Route::delete('/visitor/delete/{id}', [VisitorController::class, 'destroy'])->name('visitor.destroy');
 
     // LEAVE / OVERTIME
     Route::get('/leave', [LeaveController::class, 'index'])->name('leave');
     Route::get('/overtime', [LeaveController::class, 'indexOvertime'])->name('overtime');
+    Route::get('/overtime-approvals', [OvertimeController::class, 'index'])->name('overtime.index');
+    Route::post('/overtime-approvals/approve/{id}', [OvertimeController::class, 'approve'])->name('overtime.approve');
+    Route::post('/overtime-approvals/reject/{id}', [OvertimeController::class, 'reject'])->name('overtime.reject');
 
-    // SCHEDULE (Route::resource handles index, store, update, destroy automatically)
+    // SCHEDULE 
     Route::resource('/schedule', ScheduleController::class);
 
     // MANUAL CHECK
@@ -131,49 +148,13 @@ Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin']], function 
     Route::get('/attendance/export/excel', [AttendanceController::class, 'exportExcel'])->name('attendance.export.excel');
     Route::get('/attendance/export/pdf', [AttendanceController::class, 'exportPdf'])->name('attendance.export.pdf');
 
-    // --- PAY REPORT ---
+    // --- PAY REPORT & SALARY MASTER ---
     Route::get('/pay-report', [PayReportController::class, 'index'])->name('pay.report');
+    Route::get('/pay-report/fetch/{id}', [PayReportController::class, 'fetchPayData'])->name('pay-report.fetch');
+    Route::get('/settings/salary-master', [SalaryMasterController::class, 'index'])->name('salary.master');
+    Route::post('/settings/salary-master/update/{id}', [SalaryMasterController::class, 'update'])->name('salary.master.update');
 
-    // --- PHASE 3: SETTINGS & RESOLUTIONS API ---
-    // 1. The UI View for Settings
-    Route::get('/settings', function () {
-        return view('admin.settings');
-    })->name('admin.settings');
-
-    // 2. Fetch pending missed checkouts when the page loads
-    Route::get('/api/resolutions/pending', [AttendanceController::class, 'getPendingResolutions'])->name('api.resolutions.pending');
-    
-    // 3. Approve or deny a 16-hour cap flag
-    Route::post('/api/attendance/resolve/{id}', [AttendanceController::class, 'resolveMissedScan'])->name('api.attendance.resolve');
-    
-    // 4. Update the arrival grace period
-    Route::post('/api/settings/grace-period', [AttendanceController::class, 'updateGracePeriod'])->name('api.settings.grace_period');
+    // --- REAL SYSTEM SETTINGS ---
+    Route::get('/settings', [SettingController::class, 'index'])->name('admin.settings');
+    Route::post('/settings/update', [SettingController::class, 'update'])->name('settings.update');
 });
-
-/*
-|--------------------------------------------------------------------------
-| DAILY BIOMETRIC KIOSK (ODD/EVEN CHECK-IN TOGGLE)
-|--------------------------------------------------------------------------
-*/
-Route::get('/kiosk', function () {
-    return view('admin.kiosk'); 
-})->name('kiosk.view');
-
-Route::post('/scan-face', [FaceController::class, 'scanFace'])->name('scan.face');
-
-/*
-|--------------------------------------------------------------------------
-| AUTH USER ROUTES
-|--------------------------------------------------------------------------
-*/
-Route::group(['middleware' => ['auth']], function () {
-    // future user features
-});
-// Overtime Approval Routes
-Route::get('/overtime-approvals', [App\Http\Controllers\OvertimeController::class, 'index'])->name('overtime.index');
-Route::post('/overtime-approvals/approve/{id}', [App\Http\Controllers\OvertimeController::class, 'approve'])->name('overtime.approve');
-Route::post('/overtime-approvals/reject/{id}', [App\Http\Controllers\OvertimeController::class, 'reject'])->name('overtime.reject');
-// Salary Master Settings
-Route::get('/settings/salary-master', [App\Http\Controllers\SalaryMasterController::class, 'index'])->name('salary.master');
-Route::post('/settings/salary-master/update/{id}', [App\Http\Controllers\SalaryMasterController::class, 'update'])->name('salary.master.update');
-Route::get('/pay-report/fetch/{id}', [App\Http\Controllers\PayReportController::class, 'fetchPayData'])->name('pay-report.fetch');

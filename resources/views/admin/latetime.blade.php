@@ -2,19 +2,13 @@
 
 @section('css')
 <link href="{{ URL::asset('plugins/RWD-Table-Patterns/dist/css/rwd-table.min.css') }}" rel="stylesheet" type="text/css" media="screen">
-<!-- SweetAlert2 CSS for Beautiful Popup Dialogs -->
+<!-- SweetAlert2 CSS -->
 <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 
 <style>
-    /* CLEAN & SOFT TAB COLORS FIX */
     .nav-pills .nav-link { font-weight: 600; color: #64748b; border-radius: 8px; padding: 10px 20px; margin-right: 10px; transition: all 0.3s ease; border: 1px solid transparent; }
-    
-    /* Active State for Late Arrivals (Light Blue) */
     .nav-pills .late-tab.active { background-color: #e0e7ff !important; color: #4f46e5 !important; border: 1px solid #c7d2fe; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.1); }
-    
-    /* Active State for Missed Punches (Light Red/Pink) */
     .nav-pills .missed-tab.active { background-color: #fee2e2 !important; color: #e11d48 !important; border: 1px solid #fecdd3; box-shadow: 0 4px 10px rgba(225, 29, 72, 0.1); }
-
     .reason-box { background: #f8fafc; border-left: 3px solid #f59e0b; padding: 8px 12px; font-size: 13px; font-style: italic; border-radius: 4px; color: #333; }
 </style>
 @endsection
@@ -77,9 +71,14 @@
                                             <i class="ti-time mr-1"></i> {{ $lateRecord->formatted_late_time }}
                                         </td>
                                         <td class="align-middle">
-                                            <!-- SIMULATED ACTION BUTTONS -->
-                                            <button onclick="takeAction('waive', '{{ optional($lateRecord->employee)->name }}')" class="btn btn-sm btn-outline-success rounded-pill px-3 mr-1" title="Waive / Forgive Late">Waive</button>
-                                            <button onclick="takeAction('penalty', '{{ optional($lateRecord->employee)->name }}')" class="btn btn-sm btn-outline-danger rounded-pill px-3" title="Apply Penalty">Penalty</button>
+                                            @if($lateRecord->resolution_status)
+                                                <span class="badge badge-success px-3 py-2" style="font-size: 12px;">
+                                                    <i class="ti-check mr-1"></i> Done ({{ $lateRecord->resolution_status }})
+                                                </span>
+                                            @else
+                                                <button onclick="takeAction('waive', '{{ optional($lateRecord->employee)->name }}', '{{ $lateRecord->id }}')" class="btn btn-sm btn-outline-success rounded-pill px-3 mr-1" title="Waive / Forgive Late">Waive</button>
+                                                <button onclick="takeAction('penalty', '{{ optional($lateRecord->employee)->name }}', '{{ $lateRecord->id }}')" class="btn btn-sm btn-outline-danger rounded-pill px-3" title="Apply Penalty">Penalty</button>
+                                            @endif
                                         </td>
                                     </tr>
                                     @empty
@@ -95,10 +94,10 @@
                         </div>
                     </div>
 
-                    <!-- TAB 2: MISSED PUNCHES & APPROVALS -->
+                    <!-- TAB 2: MISSED PUNCHES & APPROVALS (DYNAMIC) -->
                     <div class="tab-pane" id="missed-punches" role="tabpanel">
                         <div class="alert alert-warning mb-4 border-0 shadow-sm" style="background-color: #fffbeb; color: #b45309;">
-                            <i class="ti-info-alt mr-2"></i> Employees type their defense reasons in their portal. You can review and approve them here to update their attendance logs.
+                            <i class="ti-info-alt mr-2"></i> Employees type their defense reasons in their portal. Review and approve them here to update their attendance logs.
                         </div>
                         
                         <div class="table-responsive">
@@ -113,22 +112,32 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- MOCK DATA -->
+                                    @forelse($missedRequests as $request)
                                     <tr>
-                                        <td class="align-middle">Aug 14, 2026</td>
-                                        <td class="align-middle font-weight-bold text-primary">Hariram (ID: #112)</td>
-                                        <td class="align-middle">09:15 AM</td>
+                                        <td class="align-middle">{{ \Carbon\Carbon::parse($request->date)->format('M d, Y') }}</td>
+                                        <td class="align-middle font-weight-bold text-primary">{{ optional($request->employee)->name ?? 'Emp #'.$request->emp_id }} (ID: #{{ $request->emp_id }})</td>
+                                        <td class="align-middle">{{ $request->recorded_time ?? 'N/A' }}</td>
                                         <td class="align-middle">
                                             <div class="reason-box">
-                                                "I was in the server room deployment meeting from 5 PM to 7 PM and forgot to punch out."
+                                                "{{ $request->reason }}"
                                             </div>
-                                            <span class="badge badge-warning mt-2 text-dark px-2 py-1">Requested Time Out: 07:00 PM</span>
+                                            @if($request->requested_timeout)
+                                                <span class="badge badge-warning mt-2 text-dark px-2 py-1">Requested Time Out: {{ $request->requested_timeout }}</span>
+                                            @endif
                                         </td>
                                         <td class="align-middle text-center">
-                                            <button onclick="resolvePunch('approve')" class="btn btn-sm btn-success shadow-sm mr-1"><i class="ti-check mr-1"></i> Approve</button>
-                                            <button onclick="resolvePunch('reject')" class="btn btn-sm btn-danger shadow-sm"><i class="ti-close mr-1"></i> Reject</button>
+                                            <button onclick="resolvePunch('approve', '{{ $request->id }}')" class="btn btn-sm btn-success shadow-sm mr-1"><i class="ti-check mr-1"></i> Approve</button>
+                                            <button onclick="resolvePunch('reject', '{{ $request->id }}')" class="btn btn-sm btn-danger shadow-sm"><i class="ti-close mr-1"></i> Reject</button>
                                         </td>
                                     </tr>
+                                    @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-5">
+                                            <i class="ti-face-smile mb-2" style="font-size: 30px; display: block;"></i>
+                                            No pending missed punch requests!
+                                        </td>
+                                    </tr>
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>
@@ -144,74 +153,76 @@
 
 @section('script')
 <script src="{{ URL::asset('plugins/RWD-Table-Patterns/dist/js/rwd-table.min.js') }}"></script>
-<!-- SweetAlert2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    // Tab responsive init
     $(function () {
         $('.table-responsive').responsiveTable({ addDisplayAllBtn: 'btn btn-secondary' });
     });
 
-    // JS Logic for Late Arrival Actions
-    function takeAction(type, empName) {
-        if(type === 'waive') {
-            Swal.fire({
-                title: 'Waive Late Arrival?',
-                text: "This will ignore the late mark for " + empName + " in the Pay Report.",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#10b981',
-                confirmButtonText: 'Yes, Waive it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire('Waived!', 'The late mark has been waived.', 'success');
-                }
-            });
-        } else {
-            Swal.fire({
-                title: 'Apply Penalty?',
-                text: "This will deduct pay for " + empName + " in the Pay Report.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                confirmButtonText: 'Yes, Apply Penalty'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire('Penalty Applied!', 'Payroll records updated.', 'success');
-                }
-            });
-        }
+    // Late Arrival Actions
+    function takeAction(type, empName, attendanceId) {
+        let url = (type === 'waive') ? '/attendance/waive/' + attendanceId : '/attendance/penalty/' + attendanceId;
+        let title = (type === 'waive') ? 'Waive Late Arrival?' : 'Apply Penalty?';
+        let text = (type === 'waive') ? "This will ignore late mark for " + empName : "This will deduct pay for " + empName;
+        let confirmColor = (type === 'waive') ? '#10b981' : '#ef4444';
+
+        Swal.fire({
+            title: title,
+            text: text,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: confirmColor,
+            confirmButtonText: 'Confirm'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: { _token: '{{ csrf_token() }}', amount: 200 },
+                    success: function(response) {
+                        if(response.success) {
+                            Swal.fire('Success!', response.message, 'success').then(() => location.reload());
+                        } else {
+                            Swal.fire('Error!', response.message, 'error');
+                        }
+                    }
+                });
+            }
+        });
     }
 
-    // JS Logic for Missed Punch Approval
-    function resolvePunch(action) {
-        if(action === 'approve') {
-            Swal.fire({
-                title: 'Approve Request?',
-                text: "This will update the attendance log to 07:00 PM and change status to Present.",
-                icon: 'success',
-                showCancelButton: true,
-                confirmButtonText: 'Approve'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire('Approved!', 'Attendance log has been updated.', 'success');
-                }
-            });
-        } else {
-            Swal.fire({
-                title: 'Reject Request?',
-                input: 'text',
-                inputLabel: 'Reason for Rejection (Optional)',
-                icon: 'error',
-                showCancelButton: true,
-                confirmButtonText: 'Reject'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire('Rejected', 'The request was denied.', 'info');
-                }
-            });
-        }
+    // Missed Punch Approvals / Rejections (AJAX)
+    function resolvePunch(action, requestId) {
+        let title = (action === 'approve') ? 'Approve Request?' : 'Reject Request?';
+        let text = (action === 'approve') ? "This will update the attendance log and approve the request." : "This will reject the employee's request.";
+
+        Swal.fire({
+            title: title,
+            text: text,
+            icon: (action === 'approve') ? 'success' : 'warning',
+            showCancelButton: true,
+            confirmButtonColor: (action === 'approve') ? '#10b981' : '#ef4444',
+            confirmButtonText: 'Yes, ' + action
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '/api/attendance/resolve/' + requestId,
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        action: action
+                    },
+                    success: function(response) {
+                        if(response.success) {
+                            Swal.fire('Done!', response.message, 'success').then(() => location.reload());
+                        } else {
+                            Swal.fire('Error!', response.message, 'error');
+                        }
+                    }
+                });
+            }
+        });
     }
 </script>
 @endsection

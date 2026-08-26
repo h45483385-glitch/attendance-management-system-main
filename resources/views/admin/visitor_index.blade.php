@@ -173,16 +173,28 @@
                                     @endif
                                 </td>
                                 <td class="text-right">
-                                    @if($visitor->status == 'Inside')
-                                        <form action="{{ route('visitor.checkout', $visitor->id) }}" method="POST" class="m-0">
+                                    <div class="d-flex justify-content-end align-items-center">
+                                        @if($visitor->status == 'Inside')
+                                            <!-- Check-Out Button -->
+                                            <form action="{{ route('visitor.checkout', $visitor->id) }}" method="POST" class="m-0 mr-2">
+                                                @csrf
+                                                <button type="submit" class="btn btn-checkout shadow-sm">
+                                                    <i class="mdi mdi-logout mr-1"></i> Check-Out
+                                                </button>
+                                            </form>
+                                        @else
+                                            <span class="text-muted small mr-3 font-weight-bold">Done</span>
+                                        @endif
+
+                                        <!-- Permanent Delete Button -->
+                                        <form action="{{ route('visitor.destroy', $visitor->id) }}" method="POST" class="m-0" onsubmit="return confirm('Are you sure you want to permanently delete this visitor record and their photo from AWS S3?');">
                                             @csrf
-                                            <button type="submit" class="btn btn-checkout shadow-sm">
-                                                <i class="mdi mdi-logout mr-1"></i> Check-Out
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-danger shadow-sm px-2 py-1" style="border-radius: 6px; background-color: #ef4444; border: none;" title="Delete Record">
+                                                <i class="mdi mdi-delete text-white"></i>
                                             </button>
                                         </form>
-                                    @else
-                                        <span class="text-muted small">Done</span>
-                                    @endif
+                                    </div>
                                 </td>
                             </tr>
                             @empty

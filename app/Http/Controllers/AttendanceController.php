@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Attendance;
 use App\Models\BreakLog;
 use App\Models\Employee;
+use App\Models\MissedPunchRequest;
 use Carbon\Carbon;
 
 class AttendanceController extends Controller
@@ -25,7 +26,6 @@ class AttendanceController extends Controller
             if ($employee) {
                 $rawLogs = Attendance::where('emp_id', $employee->id)->get();
 
-                // Group strictly by Date
                 $groupedLogs = $rawLogs->groupBy(function($log) {
                     return Carbon::parse($log->attendance_date)->format('Y-m-d');
                 });
@@ -37,12 +37,11 @@ class AttendanceController extends Controller
 
                 foreach ($groupedLogs as $date => $dayLogs) {
                     $dayLogs = $dayLogs->sortBy('attendance_time')->values();
-                    $lastLog = $dayLogs->last(); // Get the last action of that day
+                    $lastLog = $dayLogs->last();
                     
                     $totalMins = 0;
                     $hasMissingPunchOut = false;
 
-                    // 1. Calculate the entire day's total working minutes
                     foreach ($dayLogs as $log) {
                         $sessionMins = $log->worked_minutes;
                         if (!$sessionMins && $log->attendance_time) {
@@ -51,7 +50,6 @@ class AttendanceController extends Controller
                             } elseif ($date === $todayStr) {
                                 $sessionMins = Carbon::parse($date . ' ' . $log->attendance_time)->diffInMinutes(Carbon::now());
                             } else {
-                                // Past date but employee forgot to punch out!
                                 $hasMissingPunchOut = true;
                             }
                         }
@@ -61,42 +59,35 @@ class AttendanceController extends Controller
                     $hours = floor($totalMins / 60);
                     $mins = $totalMins % 60;
 
-                    // 2. DYNAMIC STATUS LOGIC (Strict checking)
                     $status = 'Absent';
 
                     if ($date === $todayStr && empty($lastLog->check_out_time)) {
-                        // Case A: Today & currently open
                         if ($lastLog->shift_status === 'On Break') {
                             $status = 'Break Time';
                         } else {
                             $status = 'In Progress';
                         }
                     } elseif ($date !== $todayStr && $hasMissingPunchOut) {
-                        // Case B: Past Date but forgot to punch out
                         $status = 'Missing Punch';
                     } else {
-                        // Case C: Day Completed (Check total hours)
-                        if ($totalMins >= 480) { // 8 Hours (480 mins) or more
+                        if ($totalMins >= 480) {
                             $status = 'Present';
-                        } elseif ($totalMins > 0) { // Less than 8 hours
+                        } elseif ($totalMins > 0) {
                             $status = 'Partial Shift';
                         }
                     }
 
-                    // Push exactly ONE record per date!
                     $finalLogs->push((object)[
                         'date' => $date,
                         'net_hours' => "{$hours}h {$mins}m",
                         'status' => $status
                     ]);
 
-                    // Percentage calculation
                     if ($totalMins >= 480 || ($date === $todayStr && empty($lastLog->check_out_time))) {
                         $presentDays++;
                     }
                 }
 
-                // Sort UI from newest to oldest date
                 $logs = $finalLogs->sortByDesc('date')->values();
                 $attendancePercentage = $totalDays > 0 ? round(($presentDays / $totalDays) * 100) : 0;
 
@@ -113,7 +104,11 @@ class AttendanceController extends Controller
     {
         $standardStartTime = '09:30:00'; 
         
-        $allAttendances = Attendance::with('employee')->orderBy('attendance_date', 'desc')->get();
+        $allAttendances = Attendance::with('employee')
+            ->whereNull('resolution_status')
+            ->orderBy('attendance_date', 'desc')
+            ->get();
+            
         $latetimes = collect(); 
 
         $groupedAttendances = $allAttendances->groupBy(function($item) {
@@ -151,7 +146,78 @@ class AttendanceController extends Controller
             }
         }
         
-        return view('admin.latetime', compact('latetimes'));
+        // Fetch Pending Missed Punch Requests for Tab 2
+        $missedRequests = MissedPunchRequest::with('employee')
+            ->where('status', 'Pending')
+            ->orderBy('date', 'desc')
+            ->get();
+
+        return view('admin.latetime', compact('latetimes', 'missedRequests'));
+    }
+
+    public function waiveLate($id)
+    {
+        $attendance = Attendance::find($id);
+
+        if ($attendance) {
+            $attendance->resolution_status = 'Waived';
+            $attendance->penalty_amount = 0;
+            $attendance->save();
+
+            return response()->json(['success' => true, 'message' => 'Late mark has been waived successfully!']);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Record not found.']);
+    }
+
+    public function applyPenalty(Request $request, $id)
+    {
+        $attendance = Attendance::find($id);
+
+        if ($attendance) {
+            $attendance->resolution_status = 'Penalty Applied';
+            $attendance->penalty_amount = $request->input('amount', 200.00); 
+            $attendance->save();
+
+            return response()->json(['success' => true, 'message' => 'Penalty applied and payroll updated!']);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Record not found.']);
+    }
+
+    // 🚀 Missed Punch Approval / Rejection Logic
+    public function resolveMissedScan(Request $request, $id)
+    {
+        $action = $request->input('action'); // 'approve' or 'reject'
+        $missedRequest = MissedPunchRequest::find($id);
+
+        if (!$missedRequest) {
+            return response()->json(['success' => false, 'message' => 'Request not found.']);
+        }
+
+        if ($action === 'approve') {
+            $missedRequest->status = 'Approved';
+            $missedRequest->save();
+
+            // Update or create attendance log with requested timeout
+            Attendance::updateOrCreate(
+                [
+                    'emp_id' => $missedRequest->emp_id,
+                    'attendance_date' => $missedRequest->date,
+                ],
+                [
+                    'check_out_time' => $missedRequest->requested_timeout,
+                    'shift_status' => 'Full Shift',
+                ]
+            );
+
+            return response()->json(['success' => true, 'message' => 'Missed punch approved and attendance updated!']);
+        } else {
+            $missedRequest->status = 'Rejected';
+            $missedRequest->save();
+
+            return response()->json(['success' => true, 'message' => 'Missed punch request rejected.']);
+        }
     }
 
     public function store(Request $request) 
@@ -210,7 +276,7 @@ class AttendanceController extends Controller
             $breakMinutes = BreakLog::where('attendance_id', $attendance->id)->sum('duration_minutes');
 
             $attendance->worked_minutes = $totalMinutes - $breakMinutes;
-            $attendance->shift_status = ($attendance->worked_minutes >= 480) ? 'Full Shift' : 'Partial Shift'; // Updated to 8 hours rule
+            $attendance->shift_status = ($attendance->worked_minutes >= 480) ? 'Full Shift' : 'Partial Shift'; 
             
             $attendance->save();
         }
