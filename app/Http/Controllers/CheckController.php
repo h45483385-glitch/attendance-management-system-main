@@ -120,6 +120,14 @@ class CheckController extends Controller
     
     public function sheetReport()
     {
-        return view('admin.sheet-report')->with(['employees' => Employee::all()]);
+        $todayStr = Carbon::today()->format('Y-m-d');
+        $employees = Employee::all();
+        
+        // 🚀 N+1 Query Fix: Get all present employee IDs for today in a single query
+        $todayPresentEmpIds = Attendance::whereDate('attendance_date', $todayStr)
+            ->pluck('emp_id')
+            ->toArray();
+
+        return view('admin.sheet-report', compact('employees', 'todayPresentEmpIds'));
     }
 }

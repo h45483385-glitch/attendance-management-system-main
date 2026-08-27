@@ -113,12 +113,17 @@ Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin']], function 
     Route::get('/visitor-download', [VisitorController::class, 'downloadReport'])->name('visitor.export'); 
     Route::delete('/visitor/delete/{id}', [VisitorController::class, 'destroy'])->name('visitor.destroy');
 
-    // LEAVE / OVERTIME
+    // LEAVE / OVERTIME & APPROVALS
     Route::get('/leave', [LeaveController::class, 'index'])->name('leave');
     Route::get('/overtime', [LeaveController::class, 'indexOvertime'])->name('overtime');
+    
+    // Overtime Approve & Reject Routes (Handled by LeaveController)
+    Route::post('/overtime/approve/{id}', [LeaveController::class, 'approveOvertime'])->name('overtime.approve');
+    Route::post('/overtime/reject/{id}', [LeaveController::class, 'rejectOvertime'])->name('overtime.reject');
+
     Route::get('/overtime-approvals', [OvertimeController::class, 'index'])->name('overtime.index');
-    Route::post('/overtime-approvals/approve/{id}', [OvertimeController::class, 'approve'])->name('overtime.approve');
-    Route::post('/overtime-approvals/reject/{id}', [OvertimeController::class, 'reject'])->name('overtime.reject');
+    Route::post('/overtime-approvals/approve/{id}', [OvertimeController::class, 'approve'])->name('overtime.approve.alt');
+    Route::post('/overtime-approvals/reject/{id}', [OvertimeController::class, 'reject'])->name('overtime.reject.alt');
 
     // SCHEDULE 
     Route::resource('/schedule', ScheduleController::class);

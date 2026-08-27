@@ -21,7 +21,7 @@
         <!-- Header Section -->
         <div class="mb-4">
             <h2 class="mt-0 font-weight-bold text-dark mb-0" style="font-size: 28px;">
-                <i class="ti-time text-primary mr-2"></i> Schedules
+                <i class="ti-time text-primary mr-2"></i> Schedules Management
             </h2>
         </div>
 
@@ -41,6 +41,15 @@
                 <tbody>
                     @if(isset($schedules) && count($schedules) > 0)
                         @foreach($schedules as $shift)
+                            @php
+                                // Dynamic Calculation of Total Hours (Handles overnight shifts too)
+                                $start = \Carbon\Carbon::parse($shift->time_in);
+                                $end = \Carbon\Carbon::parse($shift->time_out);
+                                if ($end->lessThan($start)) {
+                                    $end->addDay();
+                                }
+                                $totalHours = round($start->diffInMinutes($end) / 60, 1);
+                            @endphp
                             <tr>
                                 <td class="text-center font-weight-bold text-muted">#{{ $shift->id }}</td>
                                 <td class="font-weight-bold">
@@ -49,7 +58,7 @@
                                         {{ $shift->slug }}
                                     </span>
                                 </td>
-                                <td class="text-center font-weight-bold text-primary">9 Hours</td>
+                                <td class="text-center font-weight-bold text-primary">{{ $totalHours }} Hours</td>
                                 <td class="text-center"><i class="ti-time text-muted mr-1"></i> {{ \Carbon\Carbon::parse($shift->time_in)->format('h:i A') }}</td>
                                 <td class="text-center"><i class="ti-time text-muted mr-1"></i> {{ \Carbon\Carbon::parse($shift->time_out)->format('h:i A') }}</td>
                                 <td class="text-center">
@@ -82,7 +91,7 @@
 </div>
 
 <!-- ==============================================
-                  MODALS SECTION 
+                MODALS SECTION 
 =============================================== -->
 
 <!-- 1. Add New Shift Modal -->
@@ -164,28 +173,30 @@
         </div>
 
         <!-- Delete Modal -->
-        <div class="modal fade" id="deleteShift{{ $shift->id }}" tabindex="-1" role="dialog" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content">
-                    <div class="modal-header bg-danger text-white">
-                        <h5 class="modal-title font-weight-bold text-white"><i class="ti-alert mr-1"></i> Confirm Delete</h5>
-                        <button type="button" class="close text-white" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal fade" id="deleteShift{{ $shift->id }}" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title font-weight-bold text-white"><i class="ti-alert mr-1"></i> Confirm Delete</h5>
+                            <button type="button" class="close text-white" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form action="{{ url('/schedule/'.$shift->id) }}" method="POST">
+                            @csrf
+                            @method('DELETE')
+                            <div class="modal-body text-center py-4">
+                                <i class="ti-trash text-danger" style="font-size: 50px;"></i>
+                                <h5 class="mt-3">Are you sure you want to delete <br><b>"{{ $shift->slug }}"</b>?</h5>
+                                <p class="text-muted">This action cannot be undone.</p>
+                            </div>
+                            <div class="modal-footer bg-light justify-content-center">
+                                <button type="button" class="btn btn-secondary px-4" data-dismiss="modal" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-danger px-4">Yes, Delete</button>
+                            </div>
+                        </form>
                     </div>
-                    <form action="{{ url('/schedule/'.$shift->id) }}" method="POST">
-                        @csrf
-                        @method('DELETE')
-                        <div class="modal-body text-center py-4">
-                            <i class="ti-trash text-danger" style="font-size: 50px;"></i>
-                            <h5 class="mt-3">Are you sure you want to delete <br><b>"{{ $shift->slug }}"</b>?</h5>
-                            <p class="text-muted">This action cannot be undone.</p>
-                        </div>
-                        <div class="modal-footer bg-light justify-content-center">
-                            <button type="button" class="btn btn-secondary px-4" data-dismiss="modal" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-danger px-4">Yes, Delete</button>
-                        </div>
-                    </form>
                 </div>
             </div>
         </div>

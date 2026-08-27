@@ -66,13 +66,15 @@
                     </a>
                 </li>
                 
+                <!-- UPDATED ATTENDANCE MENU WITH OVERTIME SUB-MENU -->
                 <li>
-                    <a href="javascript:void(0);" class="waves-effect has-arrow {{ request()->is('check', 'sheet-report') ? 'active' : '' }}">
+                    <a href="javascript:void(0);" class="waves-effect has-arrow {{ request()->is('check', 'sheet-report', 'overtime') ? 'active' : '' }}">
                         <i class="ti-calendar"></i><span> Attendance </span>
                     </a>
                     <ul class="submenu">
                         <li><a href="/check" class="{{ request()->is('check') ? 'active' : '' }}">Today's Live Sheet</a></li>
                         <li><a href="/sheet-report" class="{{ request()->is('sheet-report') ? 'active' : '' }}">Master Attendance</a></li>
+                        <li><a href="/overtime" class="{{ request()->is('overtime') ? 'active' : '' }}">Overtime Approvals</a></li>
                     </ul>
                 </li>
 

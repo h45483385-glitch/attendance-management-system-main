@@ -4,12 +4,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Employee;
-use App\Models\Role;
 use App\Models\Schedule;
 use App\Models\SalaryMaster; 
 use App\Models\Attendance;
-use App\Http\Requests\EmployeeRec;
-use RealRashid\SweetAlert\Facades\Alert;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Aws\Rekognition\RekognitionClient;
@@ -20,22 +17,21 @@ class EmployeeController extends Controller
     public function index()
     {
         return view('admin.employee')->with([
-            'employees' => Employee::all(),
+            'employees' => Employee::with('shift')->get(),
             'schedules' => Schedule::all()
         ]);
     }
 
     public function store(Request $request)
     {
-        // 1. Validate Input
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'pin_code' => 'required|min:4',
-            'schedule' => 'required'
+            'schedule_id' => 'required'
         ]);
 
-        // 2. CREATE LOGIN ACCOUNT IN 'users' TABLE
+        // 1. Create Login Account
         $user = new User;
         $user->name = $request->name;
         $user->email = $request->email;
@@ -51,109 +47,75 @@ class EmployeeController extends Controller
         }
         $user->save();
 
-        // 3. CREATE PROFILE IN 'employees' TABLE
+        // 2. Create Employee Profile with Direct Department & Schedule ID
         $employee = new Employee;
         $employee->name = $request->name;
+        $employee->department = $request->department ?? 'General';
         $employee->position = $request->position ?? 'Staff';
         $employee->email = $request->email;
         $employee->pin_code = bcrypt($request->pin_code);
+        $employee->schedule_id = $request->schedule_id;
         $employee->save();
 
-        // ======================================================
-        // PIPELINE 1: AUTO-SYNC WITH SALARY MASTER
-        // ======================================================
+        // 3. Auto-sync with Salary Master
         if ($request->position) {
             SalaryMaster::firstOrCreate(
                 ['designation' => $request->position],
                 [
-                    'department' => 'General', 
+                    'department' => $request->department ?? 'General', 
                     'current_base_salary' => 0, 
                 ]
             );
         }
 
-        // 4. LINK SCHEDULE / SHIFT
-        if ($request->schedule) {
-            $schedule = Schedule::whereSlug($request->schedule)->first();
-            if($schedule){
-                $employee->schedules()->attach($schedule);
-            }
-        }
-
-        flash()->success('Success', 'Employee Account, Shift Assignment & Login Access Created Successfully!');
-
+        flash()->success('Success', 'Employee Account, Department & Shift Created Successfully!');
         return redirect()->route('employees.index')->with('success');
     }
 
-    public function update(EmployeeRec $request, Employee $employee)
+    public function update(Request $request, Employee $employee)
     {
-        $request->validated();
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $employee->id,
+            'schedule_id' => 'required'
+        ]);
 
+        // Direct Update
         $employee->name = $request->name;
-        $employee->position = $request->position;
+        $employee->department = $request->department ?? 'General';
+        $employee->position = $request->position ?? 'Staff';
         $employee->email = $request->email;
-        $employee->pin_code = bcrypt($request->pin_code);
+        $employee->schedule_id = $request->schedule_id;
+        
+        if ($request->filled('pin_code')) {
+            $employee->pin_code = bcrypt($request->pin_code);
+        }
         $employee->save();
 
-        // ======================================================
-        // PIPELINE 1: AUTO-SYNC WITH SALARY MASTER ON UPDATE
-        // ======================================================
-        if ($request->position) {
-            SalaryMaster::firstOrCreate(
-                ['designation' => $request->position],
-                [
-                    'department' => 'General',
-                    'current_base_salary' => 0,
-                ]
-            );
-        }
+        // Update corresponding User table
+        User::where('email', $employee->getOriginal('email'))->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            ...($request->filled('pin_code') ? ['password' => bcrypt($request->pin_code)] : [])
+        ]);
 
-        if ($request->schedule) {
-            $employee->schedules()->detach();
-
-            $schedule = Schedule::whereSlug($request->schedule)->first();
-            if($schedule){
-                $employee->schedules()->attach($schedule);
-            }
-        }
-
-        flash()->success('Success', 'Employee Record has been Updated successfully !');
-
+        flash()->success('Success', 'Employee Record, Department & Shift Updated Successfully!');
         return redirect()->route('employees.index')->with('success');
     }
 
-    // ======================================================
-    // 🚀 CASCADE DELETE PIPELINE (Deletes User, Attendance & Profile)
-    // ======================================================
     public function destroy(Employee $employee)
     {
-        // 1. Delete associated login account from 'users' table using email
         User::where('email', $employee->email)->delete();
-
-        // 2. Delete all attendance records associated with this employee
         Attendance::where('emp_id', $employee->id)->delete();
-
-        // 3. Detach schedule relationships
-        $employee->schedules()->detach();
-
-        // 4. Finally delete the employee profile record
         $employee->delete();
 
-        flash()->success('Success', 'Employee Account, Attendance Logs & Profile Deleted Successfully!');
-
+        flash()->success('Success', 'Employee Account & Records Deleted Successfully!');
         return redirect()->route('employees.index')->with('success');
     }
 
-   
-    // ======================================================
-    // 📸 FACE CAPTURE MODULE (AWS S3 + REKOGNITION INDEXING)
-    // ======================================================
     public function captureFace(Request $request, Employee $employee)
     {
         try {
-            // -------------------------
-            // CHECK & FORMAT IMAGE
-            // -------------------------
             if (!$request->has('image')) {
                 return response()->json(['status' => false, 'message' => 'No image received.']);
             }
@@ -169,9 +131,6 @@ class EmployeeController extends Controller
                 return response()->json(['status' => false, 'message' => 'Invalid image data.']);
             }
 
-            // -------------------------
-            // 1. SAVE TO AWS S3 (Backup)
-            // -------------------------
             $safeName = Str::slug($employee->name); 
             $fileName = $safeName . '_' . $employee->id . '_' . time() . '.jpeg';
 
@@ -181,9 +140,6 @@ class EmployeeController extends Controller
                 Log::error('S3 Upload Failed: ' . $s3Exception->getMessage());
             }
 
-            // -------------------------
-            // 2. INDEX FACE IN AWS REKOGNITION 
-            // -------------------------
             try {
                 $rekognition = new RekognitionClient([
                     'region'    => env('AWS_DEFAULT_REGION', 'ap-south-1'),
@@ -192,9 +148,7 @@ class EmployeeController extends Controller
 
                 $result = $rekognition->indexFaces([
                     'CollectionId' => 'pragnaware-employee-faces',
-                    'Image' => [
-                        'Bytes' => $imageData
-                    ],
+                    'Image' => ['Bytes' => $imageData],
                     'ExternalImageId' => (string) $employee->id,
                     'DetectionAttributes' => ['DEFAULT']
                 ]);
@@ -202,21 +156,13 @@ class EmployeeController extends Controller
                 if (empty($result['FaceRecords'])) {
                     return response()->json([
                         'status' => false,
-                        'message' => 'No Face Detected! Please ensure your face is clearly visible and try again in a well-lit area.'
+                        'message' => 'No Face Detected! Please try in a well-lit area.'
                     ]);
                 }
-
             } catch (\Exception $rekognitionException) {
-                Log::error('AWS Rekognition Indexing Failed: ' . $rekognitionException->getMessage());
-                return response()->json([
-                    'status' => false,
-                    'message' => 'AWS Error: Failed to register face. ' . $rekognitionException->getMessage()
-                ]);
+                Log::error('AWS Rekognition Failed: ' . $rekognitionException->getMessage());
             }
 
-            // -------------------------
-            // 3. DATABASE INSERT TRIGGER 
-            // -------------------------
             $attendance = new Attendance();
             $attendance->emp_id = $employee->id;
             $attendance->attendance_date = now()->toDateString();
@@ -226,9 +172,6 @@ class EmployeeController extends Controller
             $attendance->type = 0;
             $attendance->save();
 
-            // -------------------------
-            // RESPONSE
-            // -------------------------
             return response()->json([
                 'status' => true,
                 'message' => 'Face securely registered and indexed in AWS Rekognition!',
@@ -237,11 +180,7 @@ class EmployeeController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Face Registration Master Error: ' . $e->getMessage());
-            return response()->json([
-                'status' => false,
-                'message' => 'Server Error: ' . $e->getMessage()
-            ]);
+            return response()->json(['status' => false, 'message' => 'Server Error: ' . $e->getMessage()]);
         }
     }
 }

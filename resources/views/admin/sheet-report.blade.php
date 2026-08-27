@@ -53,9 +53,6 @@
             <div class="card-body bg-light p-4">
                 
                 @php
-                    $today = today();
-                    $todayStr = $today->format('Y-m-d');
-                    
                     // GROUP EMPLOYEES BY DEPARTMENT (POSITION)
                     $groupedEmployees = $employees->groupBy(function($emp) {
                         return $emp->position ?: 'Unassigned Role';
@@ -67,17 +64,12 @@
                     
                     @foreach ($groupedEmployees as $departmentName => $deptEmployees)
                         @php
-                            // Calculate Today's Percentage for this specific Department
+                            // Calculate Today's Percentage for this specific Department using pre-fetched array
                             $totalInDept = $deptEmployees->count();
                             $presentToday = 0;
                             
                             foreach($deptEmployees as $emp) {
-                                $attdToday = \App\Models\Attendance::query()
-                                    ->where('emp_id', $emp->id)
-                                    ->where('attendance_date', $todayStr)
-                                    ->first();
-                                    
-                                if($attdToday) {
+                                if(in_array($emp->id, $todayPresentEmpIds)) {
                                     $presentToday++;
                                 }
                             }

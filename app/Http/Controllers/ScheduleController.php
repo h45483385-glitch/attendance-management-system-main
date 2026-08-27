@@ -68,10 +68,8 @@ class ScheduleController extends Controller
             'end_time' => 'required',
         ]);
 
-        $schedule = Schedule::find($id);
-        if (!$schedule) {
-            $schedule = new Schedule();
-        }
+        // Fixed: Use findOrFail to prevent silent record creation on bad IDs
+        $schedule = Schedule::findOrFail($id);
 
         $schedule->slug = $request->slug;
 
@@ -92,10 +90,8 @@ class ScheduleController extends Controller
 
     public function destroy($id)
     {
-        $schedule = Schedule::find($id);
-        if ($schedule) {
-            $schedule->delete();
-        }
+        $schedule = Schedule::findOrFail($id);
+        $schedule->delete();
 
         return redirect()->route('schedule.index');
     }
