@@ -30,8 +30,7 @@ class FallbackAuthenticationServiceTest extends TestCase
             'pin_code' => Hash::make('1234')
         ]);
 
-        Request::shouldReceive('ip')->andReturn('127.0.0.1');
-        Request::shouldReceive('userAgent')->andReturn('TestAgent');
+        // Removed Request mocks
 
         $result = $this->authService->attempt('test@example.com', '1234', true);
 
@@ -46,8 +45,7 @@ class FallbackAuthenticationServiceTest extends TestCase
             'pin_code' => Hash::make('1234')
         ]);
 
-        Request::shouldReceive('ip')->andReturn('127.0.0.1');
-        Request::shouldReceive('userAgent')->andReturn('TestAgent');
+        // Removed Request mocks
 
         // Simulate 5 failed attempts
         for ($i = 0; $i < 5; $i++) {
