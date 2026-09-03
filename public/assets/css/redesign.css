@@ -1,0 +1,804 @@
+/* ==========================================================================
+   PRAGNAWARE SOLUTIONS - REBUILT GLOBAL DESIGN SYSTEM (SaaS BLUE & GREEN)
+   ========================================================================== */
+
+:root {
+    --primary-blue: #116fb7;
+    --primary-green: #22c55e;
+    --bg-white: #ffffff;
+    --text-heading: #0f172a;
+    --text-normal: #334155;
+    --text-secondary: #64748b;
+    --sidebar-blue: #116fb7;
+    --sidebar-blue-dark: #0d558d;
+    --sidebar-text: #e0f2fe;
+    --sidebar-text-hover: #ffffff;
+    --sidebar-active-bg: #ffffff;
+    --sidebar-active-text: #116fb7;
+}
+
+/* 1. Global Reset & Typography */
+body {
+    background-color: #f8fafc !important;
+    font-family: 'Poppins', sans-serif !important;
+    color: var(--text-normal) !important;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-heading) !important;
+    font-family: 'Poppins', sans-serif !important;
+    font-weight: 600;
+}
+
+/* 2. Global Layout Redesign */
+.content-page {
+    background-color: #f8fafc !important;
+}
+
+.topbar {
+    background-color: var(--bg-white) !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+.topbar .topbar-left {
+    background-color: var(--sidebar-blue) !important;
+    border-right: 1px solid var(--sidebar-blue-dark) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.navbar-custom {
+    background-color: var(--bg-white) !important;
+}
+
+/* ==========================================================================
+   3. Solid Blue Sidebar Redesign - Expanded & Collapsed (Enlarged) Modes
+   ========================================================================== */
+
+/* Base Sidebar Container */
+.left.side-menu {
+    background-color: var(--sidebar-blue) !important;
+    border-right: 1px solid var(--sidebar-blue-dark) !important;
+    box-shadow: none !important;
+    width: 240px;
+    z-index: 99;
+    transition: width 0.2s ease;
+}
+
+#sidebar-menu {
+    background-color: var(--sidebar-blue) !important;
+    padding-top: 15px;
+    padding-bottom: 30px;
+}
+
+#sidebar-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#sidebar-menu .menu-title {
+    color: #93c5fd !important;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 16px 20px 6px 20px !important;
+    display: block;
+}
+
+/* Expanded Menu Items */
+#sidebar-menu > ul > li {
+    margin: 3px 0;
+    position: relative;
+}
+
+#sidebar-menu > ul > li > a {
+    color: var(--sidebar-text) !important;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 16px !important;
+    margin: 2px 14px !important;
+    border-radius: 8px;
+    transition: all 0.2s ease-in-out;
+    display: flex !important;
+    align-items: center !important;
+    position: relative;
+    text-decoration: none !important;
+    line-height: 1.4;
+    min-height: 42px;
+    box-sizing: border-box !important;
+}
+
+/* Centered & Sized Sidebar Icons */
+#sidebar-menu > ul > li > a i {
+    color: var(--sidebar-text) !important;
+    font-size: 18px !important;
+    width: 24px !important;
+    min-width: 24px !important;
+    height: 24px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    margin: 0 12px 0 0 !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
+    line-height: 1 !important;
+    transition: color 0.2s;
+}
+
+/* Label text in expanded mode */
+#sidebar-menu > ul > li > a span {
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    flex: 1;
+}
+
+/* Hover State */
+#sidebar-menu > ul > li > a:hover {
+    color: var(--sidebar-text-hover) !important;
+    background-color: var(--sidebar-blue-dark) !important;
+}
+
+#sidebar-menu > ul > li > a:hover i {
+    color: var(--sidebar-text-hover) !important;
+}
+
+/* Active State */
+#sidebar-menu > ul > li > a.active,
+#sidebar-menu > ul > li > a.mm.active,
+#sidebar-menu > ul > li.active > a,
+#sidebar-menu > ul > li.mm-active > a {
+    background-color: var(--sidebar-active-bg) !important;
+    color: var(--sidebar-active-text) !important;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+}
+
+#sidebar-menu > ul > li > a.active i,
+#sidebar-menu > ul > li > a.mm.active i,
+#sidebar-menu > ul > li.active > a i,
+#sidebar-menu > ul > li.mm-active > a i {
+    color: var(--sidebar-active-text) !important;
+}
+
+/* Submenu Styling */
+#sidebar-menu .submenu {
+    background-color: var(--sidebar-blue-dark) !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 6px 8px !important;
+    margin: 4px 14px;
+    border-radius: 8px;
+    list-style: none;
+}
+
+#sidebar-menu .submenu li a {
+    color: var(--sidebar-text) !important;
+    font-size: 13px;
+    padding: 8px 14px !important;
+    margin: 2px 0;
+    border-radius: 6px;
+    transition: all 0.2s;
+    display: block;
+    text-decoration: none !important;
+}
+
+#sidebar-menu .submenu li a:hover {
+    background-color: var(--sidebar-blue) !important;
+    color: var(--sidebar-text-hover) !important;
+}
+
+#sidebar-menu .submenu li a.active,
+#sidebar-menu .submenu li.active > a,
+#sidebar-menu .submenu li.mm-active > a {
+    color: #ffffff !important;
+    font-weight: 600;
+    background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* MetisMenu Dropdown Arrow Indicators */
+#sidebar-menu ul li a.has-arrow {
+    padding-right: 32px !important;
+}
+
+#sidebar-menu ul li a.has-arrow::after {
+    border-color: var(--sidebar-text) !important;
+    border-width: 0 2px 2px 0 !important;
+    padding: 3px !important;
+    right: 16px !important;
+    top: 50% !important;
+    transform: translateY(-50%) rotate(45deg) !important;
+    position: absolute !important;
+    transition: transform 0.2s ease-in-out;
+}
+
+#sidebar-menu ul li.mm-active > a.has-arrow::after, 
+#sidebar-menu ul li.active > a.has-arrow::after,
+#sidebar-menu ul li > a[aria-expanded="true"].has-arrow::after {
+    border-color: var(--sidebar-active-text) !important;
+    transform: translateY(-50%) rotate(-135deg) !important;
+}
+
+/* ==========================================================================
+   Collapsed / Enlarged Sidebar Mode (.enlarged)
+   ========================================================================== */
+
+.enlarged #wrapper .left.side-menu,
+.enlarged .left.side-menu {
+    width: 72px !important;
+    z-index: 999 !important;
+}
+
+.enlarged #wrapper .navbar-custom,
+.enlarged .navbar-custom {
+    margin-left: 72px !important;
+}
+
+.enlarged #wrapper .content-page,
+.enlarged .content-page {
+    margin-left: 72px !important;
+}
+
+.enlarged #wrapper .footer,
+.enlarged .footer {
+    left: 72px !important;
+}
+
+.enlarged #wrapper .topbar .topbar-left,
+.enlarged .topbar .topbar-left {
+    width: 72px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+}
+
+.topbar .topbar-left .logo-large {
+    display: inline-block;
+}
+
+.topbar .topbar-left .logo-small {
+    display: none;
+}
+
+.enlarged #wrapper .topbar .topbar-left .logo-large,
+.enlarged .topbar .topbar-left .logo-large {
+    display: none !important;
+}
+
+.enlarged #wrapper .topbar .topbar-left .logo-small,
+.enlarged .topbar .topbar-left .logo-small {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Hide section titles in collapsed mode */
+.enlarged #wrapper #sidebar-menu .menu-title,
+.enlarged #sidebar-menu .menu-title {
+    display: none !important;
+}
+
+/* Centered list items */
+.enlarged #wrapper #sidebar-menu > ul > li,
+.enlarged #sidebar-menu > ul > li {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    margin: 6px 0 !important;
+    padding: 0 !important;
+    position: relative !important;
+    white-space: nowrap !important;
+}
+
+/* Compact Centered Icon Button in Collapsed Mode */
+.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li > a,
+.enlarged #wrapper #sidebar-menu > ul > li > a,
+.enlarged #sidebar-menu > ul > li > a {
+    width: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+    color: var(--sidebar-text) !important;
+}
+
+/* Fully Visible, Centered Icon */
+.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li > a i,
+.enlarged #wrapper #sidebar-menu > ul > li > a i,
+.enlarged #sidebar-menu > ul > li > a i {
+    font-size: 20px !important;
+    width: 24px !important;
+    min-width: 24px !important;
+    max-width: 24px !important;
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    flex-shrink: 0 !important;
+    color: var(--sidebar-text) !important;
+}
+
+/* Submenu header styling (hidden in expanded mode) */
+#sidebar-menu ul.submenu .submenu-header {
+    display: none;
+}
+
+/* Hide text & arrows by default in collapsed mode */
+.enlarged #wrapper .left.side-menu #sidebar-menu ul > li > a span,
+.enlarged #wrapper #sidebar-menu ul > li > a span,
+.enlarged #sidebar-menu ul > li > a span,
+.enlarged #wrapper #sidebar-menu > ul > li > a.has-arrow::after,
+.enlarged #sidebar-menu > ul > li > a.has-arrow::after {
+    display: none;
+}
+
+/* Hover Tooltip on Single Navigation Icons in Collapsed Mode */
+.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li:hover > a:not(.has-arrow) span,
+.enlarged #wrapper #sidebar-menu > ul > li:hover > a:not(.has-arrow) span,
+.enlarged #sidebar-menu > ul > li:hover > a:not(.has-arrow) span,
+.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li:not(:has(ul.submenu)):hover > a span,
+.enlarged #wrapper #sidebar-menu > ul > li:not(:has(ul.submenu)):hover > a span,
+.enlarged #sidebar-menu > ul > li:not(:has(ul.submenu)):hover > a span {
+    display: inline-flex !important;
+    align-items: center !important;
+    position: absolute !important;
+    left: 54px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background-color: #0c4e82 !important;
+    color: #ffffff !important;
+    padding: 7px 14px !important;
+    border-radius: 6px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    white-space: nowrap !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+    z-index: 1002 !important;
+    pointer-events: none !important;
+    line-height: 1.4 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Tooltip arrow pointer */
+.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li:hover > a:not(.has-arrow) span::before,
+.enlarged #wrapper #sidebar-menu > ul > li:hover > a:not(.has-arrow) span::before,
+.enlarged #sidebar-menu > ul > li:hover > a:not(.has-arrow) span::before,
+.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li:not(:has(ul.submenu)):hover > a span::before,
+.enlarged #wrapper #sidebar-menu > ul > li:not(:has(ul.submenu)):hover > a span::before,
+.enlarged #sidebar-menu > ul > li:not(:has(ul.submenu)):hover > a span::before {
+    content: "" !important;
+    position: absolute !important;
+    left: -6px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    border-top: 6px solid transparent !important;
+    border-bottom: 6px solid transparent !important;
+    border-right: 6px solid #0c4e82 !important;
+}
+
+/* Active Button in Collapsed Mode */
+.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li > a.active,
+.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li > a.mm.active,
+.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li.active > a,
+.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li.mm-active > a,
+.enlarged #sidebar-menu > ul > li > a.active,
+.enlarged #sidebar-menu > ul > li > a.mm.active,
+.enlarged #sidebar-menu > ul > li.active > a,
+.enlarged #sidebar-menu > ul > li.mm-active > a {
+    background-color: var(--sidebar-active-bg) !important;
+    color: var(--sidebar-active-text) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    border-radius: 10px !important;
+    width: 44px !important;
+    height: 44px !important;
+    margin: 0 auto !important;
+}
+
+.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li > a.active i,
+.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li > a.mm.active i,
+.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li.active > a i,
+.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li.mm-active > a i,
+.enlarged #sidebar-menu > ul > li > a.active i,
+.enlarged #sidebar-menu > ul > li > a.mm.active i,
+.enlarged #sidebar-menu > ul > li.active > a i,
+.enlarged #sidebar-menu > ul > li.mm-active > a i {
+    color: var(--sidebar-active-text) !important;
+}
+
+/* Hover on item in collapsed mode */
+.enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > a,
+.enlarged #wrapper #sidebar-menu > ul > li:hover > a,
+.enlarged #sidebar-menu > ul > li:hover > a {
+    width: 44px !important;
+    max-width: 44px !important;
+    min-width: 44px !important;
+    position: relative !important;
+    background-color: var(--sidebar-blue-dark) !important;
+    color: var(--sidebar-text-hover) !important;
+}
+
+.enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > a i,
+.enlarged #wrapper #sidebar-menu > ul > li:hover > a i,
+.enlarged #sidebar-menu > ul > li:hover > a i {
+    color: var(--sidebar-text-hover) !important;
+}
+
+/* Submenu Popup Flyout in Collapsed Mode */
+.enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > ul,
+.enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > ul.submenu,
+.enlarged #sidebar-menu ul > li:hover > ul.submenu {
+    display: block !important;
+    left: 54px !important;
+    top: -4px !important;
+    position: absolute !important;
+    width: 220px !important;
+    height: auto !important;
+    background-color: #0c4e82 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3) !important;
+    padding: 8px 10px !important;
+    margin: 0 !important;
+    z-index: 1001 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Submenu Header in Collapsed Flyout */
+.enlarged #wrapper .left.side-menu #sidebar-menu ul.submenu .submenu-header,
+.enlarged #sidebar-menu ul.submenu .submenu-header {
+    display: block !important;
+    color: #93c5fd !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.8px !important;
+    padding: 6px 12px !important;
+    margin-bottom: 4px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > ul a,
+.enlarged #sidebar-menu ul > li:hover > ul a {
+    color: var(--sidebar-text) !important;
+    padding: 8px 14px !important;
+    border-radius: 6px !important;
+    display: block !important;
+    width: 100% !important;
+    text-align: left !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    font-size: 13px !important;
+}
+
+.enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > ul a:hover,
+.enlarged #sidebar-menu ul > li:hover > ul a:hover {
+    background-color: var(--sidebar-blue) !important;
+    color: #ffffff !important;
+}
+
+/* SlimScroll Overrides — allow native title tooltips to escape the scroll container.
+   slimscroll sets overflow:hidden on its injected .slimScrollDiv wrapper, which clips
+   the browser's OS-level tooltip popup. We force overflow:visible in ALL sidebar states
+   so the tooltip can render outside the sidebar bounds. */
+
+/* Expanded sidebar mode */
+.left.side-menu .slimScrollDiv,
+.slimscroll-menu,
+#remove-scroll {
+    overflow: visible !important;
+}
+
+/* Collapsed / Enlarged mode */
+.enlarged #wrapper .slimScrollDiv,
+.enlarged .slimScrollDiv,
+.enlarged #wrapper .slimscroll-menu,
+.enlarged .slimscroll-menu {
+    overflow: visible !important;
+}
+
+.enlarged #wrapper .slimScrollBar,
+.enlarged .slimScrollBar {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* Fix: .waves-effect (applied to every sidebar <a>) sets overflow:hidden which clips
+   the browser's native title tooltip. Override it only on sidebar links.
+   The ripple canvas still works because it is absolutely positioned. */
+#sidebar-menu > ul > li > a.waves-effect {
+    overflow: visible !important;
+}
+
+/* Fix: #wrapper in style.css has overflow:hidden which also clips tooltip rendering.
+   The sidebar sits outside the scrollable content area so this is safe to relax. */
+#wrapper {
+    overflow: visible !important;
+}
+
+/* 4. Cards Modernization */
+.card {
+    background-color: var(--bg-white) !important;
+    border: 1px solid #f1f5f9 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02) !important;
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+
+.card-header {
+    background-color: var(--bg-white) !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    padding: 20px 24px !important;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 24px !important;
+}
+
+/* 5. Tables Redesign */
+.table {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+.table th {
+    background-color: #f8fafc !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    font-size: 11px !important;
+    letter-spacing: 0.8px !important;
+    padding: 14px 20px !important;
+    border-top: none !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+}
+
+.table td {
+    padding: 16px 20px !important;
+    color: #334155 !important;
+    border-top: 1px solid #f1f5f9 !important;
+    vertical-align: middle !important;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8fafc !important;
+}
+
+/* 6. Form Elements Custom Styling */
+.form-control, select.form-control, textarea.form-control {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
+    font-size: 14px !important;
+    padding: 10px 14px !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+    height: auto !important;
+}
+
+.form-control:focus, select.form-control:focus, textarea.form-control:focus {
+    border-color: var(--primary-blue) !important;
+    outline: 0 !important;
+    box-shadow: 0 0 0 3px rgba(17, 111, 183, 0.15) !important;
+}
+
+label {
+    font-weight: 600 !important;
+    color: #475569 !important;
+    font-size: 13px !important;
+    margin-bottom: 6px !important;
+}
+
+/* 7. Button Redesign (Preserving Color Codes) */
+.btn {
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    padding: 10px 20px !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease-in-out !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.btn-primary {
+    background-color: var(--primary-blue) !important;
+    color: #ffffff !important;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+    background-color: #0d558d !important;
+    transform: translateY(-1px);
+}
+
+.btn-success {
+    background-color: var(--primary-green) !important;
+    color: #ffffff !important;
+}
+
+.btn-success:hover, .btn-success:focus {
+    background-color: #16a34a !important;
+    transform: translateY(-1px);
+}
+
+.btn-danger {
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+}
+
+.btn-danger:hover, .btn-danger:focus {
+    background-color: #dc2626 !important;
+    transform: translateY(-1px);
+}
+
+.btn-warning {
+    background-color: #f59e0b !important;
+    color: #ffffff !important;
+}
+
+.btn-warning:hover, .btn-warning:focus {
+    background-color: #d97706 !important;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background-color: #e2e8f0 !important;
+    color: #334155 !important;
+}
+
+.btn-secondary:hover {
+    background-color: #cbd5e1 !important;
+}
+
+/* 8. Badge Overrides */
+.badge {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 5px 10px !important;
+    border-radius: 20px !important;
+}
+
+.badge-success {
+    background-color: #dcfce7 !important;
+    color: #15803d !important;
+}
+
+.badge-danger {
+    background-color: #fee2e2 !important;
+    color: #b91c1c !important;
+}
+
+.badge-warning {
+    background-color: #fef3c7 !important;
+    color: #b45309 !important;
+}
+
+.badge-info {
+    background-color: #e0f2fe !important;
+    color: #0369a1 !important;
+}
+
+/* 9. Modals Redesign */
+.modal-content {
+    border: none !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12) !important;
+}
+
+.modal-header {
+    background-color: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 20px 24px !important;
+}
+
+.modal-body {
+    padding: 24px !important;
+}
+
+.modal-footer {
+    background-color: #f8fafc !important;
+    border-top: 1px solid #e2e8f0 !important;
+    padding: 16px 24px !important;
+}
+
+/* 10. Responsive Elements & Helpers */
+@media (max-width: 768px) {
+    .content-page {
+        margin-left: 0 !important;
+    }
+}
+
+/* 11. Custom 5-Column Grid System for Stats Dashboards */
+.col-md-2-5 {
+    position: relative;
+    width: 100%;
+    padding-right: 12px;
+    padding-left: 12px;
+}
+
+@media (min-width: 992px) {
+    .col-md-2-5 {
+        flex: 0 0 20%;
+        max-width: 20%;
+    }
+}
+
+@media (max-width: 991px) and (min-width: 768px) {
+    .col-md-2-5 {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+    }
+}
+
+@media (max-width: 767px) and (min-width: 576px) {
+    .col-md-2-5 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+
+/* 12. SaaS Page Header & Subtitles */
+.page-title {
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    color: var(--text-heading) !important;
+    margin-bottom: 4px !important;
+}
+
+.breadcrumb-item a {
+    color: var(--primary-blue) !important;
+}
+
+/* 13. modern select dropdown overrides */
+select.form-control-saas {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    background-size: 16px 12px !important;
+    padding-right: 36px !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+
+/* 14. Activity Rows & Timeline */
+.activity-row {
+    border-left: 3px solid transparent;
+    transition: all 0.2s;
+}
+
+.activity-row:hover {
+    background-color: #f8fafc;
+}
+
+.activity-row[data-category="late"] { border-left-color: #ef4444; }
+.activity-row[data-category="break"] { border-left-color: var(--primary-blue); }
+.activity-row[data-category="ontime"] { border-left-color: var(--primary-green); }
