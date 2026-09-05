@@ -65,13 +65,39 @@ h1, h2, h3, h4, h5, h6 {
     box-shadow: none !important;
     width: 240px;
     z-index: 99;
+    position: fixed !important;
+    top: 70px !important;
+    bottom: 0 !important;
+    height: calc(100vh - 70px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
     transition: width 0.2s ease;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.left.side-menu::-webkit-scrollbar {
+    width: 5px;
+}
+
+.left.side-menu::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.left.side-menu::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.left.side-menu:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.4);
 }
 
 #sidebar-menu {
     background-color: var(--sidebar-blue) !important;
     padding-top: 15px;
-    padding-bottom: 30px;
+    padding-bottom: 50px;
 }
 
 #sidebar-menu ul {
@@ -231,10 +257,24 @@ h1, h2, h3, h4, h5, h6 {
    Collapsed / Enlarged Sidebar Mode (.enlarged)
    ========================================================================== */
 
+/* In collapsed mode, the sidebar must NOT clip horizontally so flyout menus can escape cleanly */
 .enlarged #wrapper .left.side-menu,
 .enlarged .left.side-menu {
     width: 72px !important;
-    z-index: 999 !important;
+    z-index: 9999 !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+}
+
+.enlarged #wrapper .left.side-menu #sidebar-menu,
+.enlarged .left.side-menu #sidebar-menu,
+.enlarged #wrapper .left.side-menu .slimScrollDiv,
+.enlarged .left.side-menu .slimScrollDiv,
+.enlarged #wrapper .left.side-menu .slimscroll-menu,
+.enlarged .left.side-menu .slimscroll-menu,
+.enlarged #remove-scroll {
+    overflow: visible !important;
 }
 
 .enlarged #wrapper .navbar-custom,
@@ -300,6 +340,12 @@ h1, h2, h3, h4, h5, h6 {
     white-space: nowrap !important;
 }
 
+/* Elevate hovered li above neighboring items to prevent overlap clipping */
+.enlarged #wrapper #sidebar-menu > ul > li:hover,
+.enlarged #sidebar-menu > ul > li:hover {
+    z-index: 10000 !important;
+}
+
 /* Compact Centered Icon Button in Collapsed Mode */
 .enlarged #wrapper .left.side-menu #sidebar-menu > ul > li > a,
 .enlarged #wrapper #sidebar-menu > ul > li > a,
@@ -344,54 +390,49 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--sidebar-text) !important;
 }
 
-/* Submenu header styling (hidden in expanded mode) */
-#sidebar-menu ul.submenu .submenu-header {
-    display: none;
-}
-
-/* Hide text & arrows by default in collapsed mode */
+/* Hide text & arrows by default AND on hover in collapsed mode (prevent style.css leak) */
 .enlarged #wrapper .left.side-menu #sidebar-menu ul > li > a span,
 .enlarged #wrapper #sidebar-menu ul > li > a span,
 .enlarged #sidebar-menu ul > li > a span,
+.enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > a span,
+.enlarged #wrapper #sidebar-menu ul > li:hover > a span,
+.enlarged #sidebar-menu ul > li:hover > a span,
 .enlarged #wrapper #sidebar-menu > ul > li > a.has-arrow::after,
-.enlarged #sidebar-menu > ul > li > a.has-arrow::after {
-    display: none;
+.enlarged #sidebar-menu > ul > li > a.has-arrow::after,
+.enlarged #wrapper #sidebar-menu > ul > li:hover > a.has-arrow::after,
+.enlarged #sidebar-menu > ul > li:hover > a.has-arrow::after {
+    display: none !important;
 }
 
-/* Hover Tooltip on Single Navigation Icons in Collapsed Mode */
-.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li:hover > a:not(.has-arrow) span,
-.enlarged #wrapper #sidebar-menu > ul > li:hover > a:not(.has-arrow) span,
-.enlarged #sidebar-menu > ul > li:hover > a:not(.has-arrow) span,
-.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li:not(:has(ul.submenu)):hover > a span,
-.enlarged #wrapper #sidebar-menu > ul > li:not(:has(ul.submenu)):hover > a span,
-.enlarged #sidebar-menu > ul > li:not(:has(ul.submenu)):hover > a span {
+/* Hover Tooltip ONLY on Single Navigation Icons (items with NO submenu) */
+.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li:not(:has(ul.submenu)):hover > a:not(.has-arrow) span,
+.enlarged #wrapper #sidebar-menu > ul > li:not(:has(ul.submenu)):hover > a:not(.has-arrow) span,
+.enlarged #sidebar-menu > ul > li:not(:has(ul.submenu)):hover > a:not(.has-arrow) span {
     display: inline-flex !important;
     align-items: center !important;
     position: absolute !important;
-    left: 54px !important;
+    left: 56px !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
-    background-color: #0c4e82 !important;
+    background-color: #0b4776 !important;
     color: #ffffff !important;
-    padding: 7px 14px !important;
-    border-radius: 6px !important;
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
     font-size: 13px !important;
-    font-weight: 500 !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.2px;
     white-space: nowrap !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
-    z-index: 1002 !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4) !important;
+    z-index: 10005 !important;
     pointer-events: none !important;
     line-height: 1.4 !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
 /* Tooltip arrow pointer */
-.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li:hover > a:not(.has-arrow) span::before,
-.enlarged #wrapper #sidebar-menu > ul > li:hover > a:not(.has-arrow) span::before,
-.enlarged #sidebar-menu > ul > li:hover > a:not(.has-arrow) span::before,
-.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li:not(:has(ul.submenu)):hover > a span::before,
-.enlarged #wrapper #sidebar-menu > ul > li:not(:has(ul.submenu)):hover > a span::before,
-.enlarged #sidebar-menu > ul > li:not(:has(ul.submenu)):hover > a span::before {
+.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li:not(:has(ul.submenu)):hover > a:not(.has-arrow) span::before,
+.enlarged #wrapper #sidebar-menu > ul > li:not(:has(ul.submenu)):hover > a:not(.has-arrow) span::before,
+.enlarged #sidebar-menu > ul > li:not(:has(ul.submenu)):hover > a:not(.has-arrow) span::before {
     content: "" !important;
     position: absolute !important;
     left: -6px !important;
@@ -399,7 +440,7 @@ h1, h2, h3, h4, h5, h6 {
     transform: translateY(-50%) !important;
     border-top: 6px solid transparent !important;
     border-bottom: 6px solid transparent !important;
-    border-right: 6px solid #0c4e82 !important;
+    border-right: 6px solid #0b4776 !important;
 }
 
 /* Active Button in Collapsed Mode */
@@ -431,10 +472,12 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--sidebar-active-text) !important;
 }
 
-/* Hover on item in collapsed mode */
+/* Hover on item in collapsed mode - NEVER expand anchor width (override style.css 260px) */
 .enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > a,
 .enlarged #wrapper #sidebar-menu > ul > li:hover > a,
-.enlarged #sidebar-menu > ul > li:hover > a {
+.enlarged #sidebar-menu > ul > li:hover > a,
+.enlarged #wrapper .left.side-menu #sidebar-menu > ul > li:hover > a,
+body.enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > a {
     width: 44px !important;
     max-width: 44px !important;
     min-width: 44px !important;
@@ -449,56 +492,178 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--sidebar-text-hover) !important;
 }
 
-/* Submenu Popup Flyout in Collapsed Mode */
-.enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > ul,
-.enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > ul.submenu,
-.enlarged #sidebar-menu ul > li:hover > ul.submenu {
-    display: block !important;
-    left: 54px !important;
-    top: -4px !important;
-    position: absolute !important;
-    width: 220px !important;
-    height: auto !important;
-    background-color: #0c4e82 !important;
-    border-radius: 8px !important;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3) !important;
-    padding: 8px 10px !important;
-    margin: 0 !important;
-    z-index: 1001 !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+.enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > a i,
+.enlarged #wrapper #sidebar-menu > ul > li:hover > a i,
+.enlarged #sidebar-menu > ul > li:hover > a i {
+    color: var(--sidebar-text-hover) !important;
 }
 
-/* Submenu Header in Collapsed Flyout */
-.enlarged #wrapper .left.side-menu #sidebar-menu ul.submenu .submenu-header,
-.enlarged #sidebar-menu ul.submenu .submenu-header {
+/* Clean Submenu Behavior for Expanded & Collapsed Sidebar */
+#sidebar-menu ul.submenu,
+#sidebar-menu ul > li > ul.submenu {
+    position: static;
+    float: none;
+    display: none;
+    left: auto;
+    top: auto;
+    width: calc(100% - 24px);
+    box-shadow: none;
+    border-radius: 8px;
+    margin: 4px 12px;
+    padding: 6px 6px;
+    background-color: var(--sidebar-blue-dark, #0c4e82);
+    z-index: 1;
+    border: none;
+    transition: all 0.2s ease-in-out;
+}
+
+#sidebar-menu ul.submenu.mm-show,
+#sidebar-menu ul > li.mm-active > ul.submenu {
     display: block !important;
-    color: #93c5fd !important;
+}
+
+/* ==========================================================================
+   World-Class Enterprise Collapsed Mode (.enlarged) Flyout Sub-Menus
+   ========================================================================== */
+
+/* Submenu header styling: hidden in expanded mode, visible in flyout popup */
+#sidebar-menu ul.submenu .submenu-header {
+    display: none;
+}
+
+/* Floating Submenu Container (Flyout Panel) */
+.enlarged #wrapper #sidebar-menu > ul > li:hover > ul.submenu,
+.enlarged #sidebar-menu > ul > li:hover > ul.submenu,
+.enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > ul.submenu,
+.enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > ul {
+    display: flex !important;
+    flex-direction: column !important;
+    position: absolute !important;
+    left: 70px !important;
+    top: -2px !important;
+    min-width: 250px !important;
+    width: max-content !important;
+    max-width: 320px !important;
+    margin: 0 !important;
+    padding: 8px 6px !important;
+    background-color: #0f2942 !important; /* Rich solid enterprise dark slate */
+    border-radius: 10px !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3) !important;
+    z-index: 10002 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    pointer-events: auto !important;
+    max-height: calc(100vh - 85px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    white-space: normal !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    animation: flyoutFadeSlide 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+/* Smooth Flyout Entrance Animation */
+@keyframes flyoutFadeSlide {
+    0% {
+        opacity: 0;
+        transform: translateX(-6px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Dropup flyout positioning for bottom-anchored items (Admin & Security, Visitors) */
+.enlarged #wrapper #sidebar-menu > ul > li.dropup-item:hover > ul.submenu,
+.enlarged #sidebar-menu > ul > li.dropup-item:hover > ul.submenu,
+.enlarged #wrapper .left.side-menu #sidebar-menu ul > li.dropup-item:hover > ul.submenu,
+.enlarged #wrapper .left.side-menu #sidebar-menu ul > li.dropup-item:hover > ul {
+    top: auto !important;
+    bottom: -2px !important;
+    border-radius: 10px !important;
+}
+
+/* Floating Submenu Title Header */
+.enlarged #sidebar-menu > ul > li:hover > ul.submenu .submenu-header,
+.enlarged #wrapper #sidebar-menu > ul > li:hover > ul.submenu .submenu-header {
+    display: flex !important;
+    align-items: center !important;
     font-size: 11px !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.8px !important;
-    padding: 6px 12px !important;
-    margin-bottom: 4px !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #38bdf8 !important; /* Modern enterprise sky-blue badge */
+    padding: 8px 14px 8px 14px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    margin: 2px 2px 6px 2px !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-radius: 6px !important;
+    white-space: nowrap !important;
 }
 
-.enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > ul a,
-.enlarged #sidebar-menu ul > li:hover > ul a {
-    color: var(--sidebar-text) !important;
-    padding: 8px 14px !important;
-    border-radius: 6px !important;
+/* Flyout list item containers */
+.enlarged #wrapper .left.side-menu #sidebar-menu ul > li > ul.submenu li,
+.enlarged #sidebar-menu > ul > li > ul.submenu li {
     display: block !important;
+    width: 100% !important;
+    margin: 1px 0 !important;
+    padding: 0 !important;
+}
+
+/* Submenu Links - Enterprise Typography & Hover Dynamics */
+#sidebar-menu ul.submenu li a,
+.enlarged #wrapper .left.side-menu #sidebar-menu ul > li > ul.submenu a,
+.enlarged #sidebar-menu ul > li > ul.submenu a,
+.enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > ul a {
+    color: #f8fafc !important; /* Zero text transparency, crisp light slate */
+    padding: 10px 16px !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
     width: 100% !important;
     text-align: left !important;
     background-color: transparent !important;
     box-shadow: none !important;
     font-size: 13px !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+    white-space: nowrap !important;
+    text-overflow: clip !important;
+    overflow: visible !important;
+    transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease !important;
+    text-decoration: none !important;
+    position: static !important;
 }
 
-.enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > ul a:hover,
-.enlarged #sidebar-menu ul > li:hover > ul a:hover {
-    background-color: var(--sidebar-blue) !important;
+/* Hover State - Soft Glow & High Contrast */
+#sidebar-menu ul.submenu li a:hover,
+.enlarged #wrapper .left.side-menu #sidebar-menu ul > li > ul.submenu a:hover,
+.enlarged #sidebar-menu ul > li > ul.submenu a:hover,
+.enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > ul a:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #38bdf8 !important;
+    transform: translateX(2px) !important;
+}
+
+/* Active Menu Item in Submenu */
+#sidebar-menu ul.submenu li.active > a,
+#sidebar-menu ul.submenu li.mm-active > a,
+#sidebar-menu ul.submenu li a.active,
+.enlarged #wrapper .left.side-menu #sidebar-menu ul > li > ul.submenu li.active > a,
+.enlarged #sidebar-menu ul > li > ul.submenu li.active > a {
+    background-color: rgba(56, 189, 248, 0.15) !important;
     color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+/* Custom Sleek Scrollbar for Long Flyouts (e.g. Admin & Security) */
+.enlarged #sidebar-menu > ul > li > ul.submenu::-webkit-scrollbar {
+    width: 4px;
+}
+
+.enlarged #sidebar-menu > ul > li > ul.submenu::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
 }
 
 /* SlimScroll Overrides — allow native title tooltips to escape the scroll container.
@@ -511,6 +676,8 @@ h1, h2, h3, h4, h5, h6 {
 .slimscroll-menu,
 #remove-scroll {
     overflow: visible !important;
+    height: auto !important;
+    min-height: 100% !important;
 }
 
 /* Collapsed / Enlarged mode */

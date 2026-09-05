@@ -74,12 +74,99 @@ class PayReportController extends Controller
             ->where('resolution_status', 'Penalty Applied')
             ->sum('penalty_amount');
         
+        // 4. 📅 ENTERPRISE ATTENDANCE, HOLIDAY & WEEKEND INTERSECTION ENGINE:
+        // வார இறுதி நாட்கள் மற்றும் விடுமுறை தினங்களின் துல்லியமான கணக்கீடு (Overlap Protection)
+        $currentMonth = Carbon::now()->month;
+        $currentYear = Carbon::now()->year;
+
+        $startOfMonth = Carbon::now()->startOfMonth();
+        $endOfMonth = Carbon::now()->endOfMonth();
+        $calendarDays = (int)$startOfMonth->daysInMonth;
+
+        $setting = \App\Models\Setting::first();
+        $isSatOff = $setting ? (bool)$setting->is_saturday_off : false;
+        $isSunOff = $setting ? (bool)$setting->is_sunday_off : true;
+
+        // Fetch all active holidays in current month
+        $monthlyHolidays = \App\Models\Holiday::whereBetween('date', [$startOfMonth->toDateString(), $endOfMonth->toDateString()])
+            ->pluck('date')
+            ->map(function($d) {
+                return Carbon::parse($d)->format('Y-m-d');
+            })
+            ->toArray();
+
+        $weekendDaysCount = 0;
+        $effectiveHolidaysCount = 0; // Holidays falling on standard working days
+        $overlappingHolidaysCount = 0; // Holidays falling on already scheduled weekends
+        $totalWorkingDays = 0;
+        $workingDateStrings = [];
+
+        $dateCursor = $startOfMonth->copy();
+        while ($dateCursor->lte($endOfMonth)) {
+            $dateStr = $dateCursor->format('Y-m-d');
+            $isWeekend = ($isSunOff && $dateCursor->dayOfWeek === Carbon::SUNDAY)
+                      || ($isSatOff && $dateCursor->dayOfWeek === Carbon::SATURDAY);
+            $isHoliday = in_array($dateStr, $monthlyHolidays);
+
+            if ($isWeekend) {
+                $weekendDaysCount++;
+                if ($isHoliday) {
+                    $overlappingHolidaysCount++;
+                }
+            } elseif ($isHoliday) {
+                $effectiveHolidaysCount++;
+            } else {
+                $totalWorkingDays++;
+                $workingDateStrings[] = $dateStr;
+            }
+
+            $dateCursor->addDay();
+        }
+
+        if ($totalWorkingDays <= 0) {
+            $totalWorkingDays = 1;
+        }
+
+        // Attendance present on designated working days
+        $presentOnWorkingDays = Attendance::where('emp_id', $employee->id)
+            ->whereIn('attendance_date', $workingDateStrings)
+            ->distinct('attendance_date')
+            ->count('attendance_date');
+
+        // Total attendance punches in month (including any voluntary weekend/holiday shifts)
+        $totalPresentMonth = Attendance::where('emp_id', $employee->id)
+            ->whereMonth('attendance_date', $currentMonth)
+            ->whereYear('attendance_date', $currentYear)
+            ->distinct('attendance_date')
+            ->count('attendance_date');
+
+        // Approved paid leaves from Leave model (scoped to working days)
+        $leaveDays = \App\Models\Leave::where('emp_id', $employee->id)
+            ->whereMonth('leave_date', $currentMonth)
+            ->whereYear('leave_date', $currentYear)
+            ->count();
+
+        // Effective credited days towards required working days
+        $creditedDays = $presentOnWorkingDays + $leaveDays;
+        $unpaidAbsent = max(0, $totalWorkingDays - $creditedDays);
+
         return response()->json([
             'success' => true,
             'employee_name' => $employee->name,
             'position' => $employee->position,
             'base_salary' => $baseSalary,
-            'penalties' => $totalPenalties // அபராதத் தொகை Pay Report-க்கு அனுப்பப்படுகிறது
+            'calendar_days' => $calendarDays,
+            'weekend_days' => $weekendDaysCount,
+            'total_holidays' => count($monthlyHolidays),
+            'effective_holidays' => $effectiveHolidaysCount,
+            'overlapping_holidays' => $overlappingHolidaysCount,
+            'total_working_days' => $totalWorkingDays,
+            'present_days' => $totalPresentMonth,
+            'present_on_working_days' => $presentOnWorkingDays,
+            'leave_days' => $leaveDays,
+            'absent_days' => $unpaidAbsent,
+            'penalties' => (float)$totalPenalties,
+            'billing_month' => Carbon::now()->format('F-Y')
         ]);
     }
 }

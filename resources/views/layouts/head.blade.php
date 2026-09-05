@@ -9,7 +9,7 @@
 <link href="{{ URL::asset('assets/css/metismenu.min.css') }}" rel="stylesheet" type="text/css">
 <link href="{{ URL::asset('assets/css/icons.css') }}" rel="stylesheet" type="text/css" />
 <link href="{{ URL::asset('assets/css/style.css') }}" rel="stylesheet" type="text/css" />
-<link href="{{ URL::asset('assets/css/redesign.css') }}" rel="stylesheet" type="text/css" />
+<link href="{{ URL::asset('assets/css/redesign.css') }}?v={{ file_exists(public_path('assets/css/redesign.css')) ? filemtime(public_path('assets/css/redesign.css')) : time() }}" rel="stylesheet" type="text/css" />
 
 {{-- <link href="{{ URL::asset('plugins/sweet-alert2/sweetalert2.min.css') }}" rel="stylesheet" type="text/css"> --}}
 <link href="{{ asset('plugins/sweetalert.min.css') }}" rel="stylesheet">

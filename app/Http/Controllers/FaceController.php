@@ -92,8 +92,16 @@ class FaceController extends Controller
                     $employeeStartTime = $schedule ? $schedule->time_in : '09:30:00';
                     $employeeEndTime = $schedule ? $schedule->time_out : '18:30:00';
                     
+                    $setting = \App\Models\Setting::first();
+                    $gracePeriod = $setting ? (int)$setting->grace_period : 10;
+
                     $shiftStart = Carbon::parse($today . ' ' . $employeeStartTime);
                     $shiftEnd = Carbon::parse($today . ' ' . $employeeEndTime);
+                    if ($shiftEnd->lessThan($shiftStart)) {
+                        $shiftEnd->addDay();
+                    }
+
+                    $lateThreshold = $shiftStart->copy()->addMinutes($gracePeriod);
                     $timeIn = Carbon::parse($today . ' ' . $currentTime);
                     
                     if ($timeIn->greaterThan($shiftEnd)) {
@@ -103,7 +111,7 @@ class FaceController extends Controller
                         ]);
                     }
                     
-                    $isLate = $timeIn->greaterThan($shiftStart) ? 0 : 1;
+                    $isLate = $timeIn->greaterThan($lateThreshold) ? 0 : 1;
 
                     // Create new attendance row
                     DB::table('attendances')->insert([
@@ -239,8 +247,16 @@ class FaceController extends Controller
             $employeeStartTime = $schedule ? $schedule->time_in : '09:30:00';
             $employeeEndTime = $schedule ? $schedule->time_out : '18:30:00';
             
+            $setting = \App\Models\Setting::first();
+            $gracePeriod = $setting ? (int)$setting->grace_period : 10;
+
             $shiftStart = Carbon::parse($today . ' ' . $employeeStartTime);
             $shiftEnd = Carbon::parse($today . ' ' . $employeeEndTime);
+            if ($shiftEnd->lessThan($shiftStart)) {
+                $shiftEnd->addDay();
+            }
+
+            $lateThreshold = $shiftStart->copy()->addMinutes($gracePeriod);
             $timeIn = Carbon::parse($today . ' ' . $currentTime);
             
             if ($timeIn->greaterThan($shiftEnd)) {
@@ -250,7 +266,7 @@ class FaceController extends Controller
                 ]);
             }
             
-            $isLate = $timeIn->greaterThan($shiftStart) ? 0 : 1;
+            $isLate = $timeIn->greaterThan($lateThreshold) ? 0 : 1;
 
             DB::table('attendances')->insert([
                 'emp_id' => $employeeExists->id,

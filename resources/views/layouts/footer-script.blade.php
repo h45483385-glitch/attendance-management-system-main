@@ -8,7 +8,7 @@
  @yield('script')
 
 <!-- App js-->
-<script src="{{ URL::asset('assets/js/app.js') }}"></script>
+<script src="{{ URL::asset('assets/js/app.js') }}?v={{ file_exists(public_path('assets/js/app.js')) ? filemtime(public_path('assets/js/app.js')) : time() }}"></script>
 
 
 <!-- Sweet-Alert  -->

@@ -610,13 +610,17 @@
                             </div>
                             <div class="form-group mb-3">
                                 <label class="font-weight-bold text-muted font-12 mb-1">Work Shift Schedule <span class="text-danger">*</span></label>
-                                <select name="schedule" class="form-control form-control-saas" required>
-                                    <option value="">-- Choose Shift --</option>
-                                    @isset($schedules)
+                                <select name="schedule" class="form-control form-control-saas" required style="cursor: pointer;">
+                                    <option value="" selected disabled>-- Choose Work Shift --</option>
+                                    @if(isset($schedules) && count($schedules) > 0)
                                         @foreach($schedules as $sched)
-                                            <option value="{{ $sched->slug }}">{{ ucfirst($sched->slug) }} ({{ \Carbon\Carbon::parse($sched->time_in)->format('h:i A') }} - {{ \Carbon\Carbon::parse($sched->time_out)->format('h:i A') }})</option>
+                                            <option value="{{ $sched->slug }}">{{ ucwords(str_replace('-', ' ', $sched->slug)) }} ({{ \Carbon\Carbon::parse($sched->time_in)->format('h:i A') }} - {{ \Carbon\Carbon::parse($sched->time_out)->format('h:i A') }})</option>
                                         @endforeach
-                                    @endisset
+                                    @else
+                                        <option value="morning-shift">Morning Shift (09:00 AM - 06:00 PM)</option>
+                                        <option value="mid-shift">Mid Shift (01:00 PM - 10:00 PM)</option>
+                                        <option value="night-shift">Night Shift (10:00 PM - 07:00 AM)</option>
+                                    @endif
                                 </select>
                             </div>
                         </div>
@@ -680,15 +684,20 @@
                             <div class="row">
                                 <div class="col-sm-6 form-group mb-3">
                                     <label class="font-weight-bold text-muted font-12 mb-1">Work Shift Schedule <span class="text-danger">*</span></label>
-                                    <select name="schedule" class="form-control form-control-saas" required>
+                                    <select name="schedule" class="form-control form-control-saas" required style="cursor: pointer;">
+                                        <option value="" {{ !$emp->schedules->first() ? 'selected' : '' }} disabled>-- Select Work Shift --</option>
                                         @php $assignedSched = $emp->schedules->first(); @endphp
-                                        @isset($schedules)
+                                        @if(isset($schedules) && count($schedules) > 0)
                                             @foreach($schedules as $sched)
                                                 <option value="{{ $sched->slug }}" {{ $assignedSched && $assignedSched->id == $sched->id ? 'selected' : '' }}>
-                                                    {{ ucfirst($sched->slug) }} ({{ \Carbon\Carbon::parse($sched->time_in)->format('h:i A') }})
+                                                    {{ ucwords(str_replace('-', ' ', $sched->slug)) }} ({{ \Carbon\Carbon::parse($sched->time_in)->format('h:i A') }} - {{ \Carbon\Carbon::parse($sched->time_out)->format('h:i A') }})
                                                 </option>
                                             @endforeach
-                                        @endisset
+                                        @else
+                                            <option value="morning-shift" selected>Morning Shift (09:00 AM - 06:00 PM)</option>
+                                            <option value="mid-shift">Mid Shift (01:00 PM - 10:00 PM)</option>
+                                            <option value="night-shift">Night Shift (10:00 PM - 07:00 AM)</option>
+                                        @endif
                                     </select>
                                 </div>
                                 <div class="col-sm-6 form-group mb-3">

@@ -25,8 +25,21 @@ class AdminController extends Controller
             ->distinct()
             ->count('emp_id');
 
-        // 2. Total Employees in the system
+        // 2. Staff Lifecycle & Biometric Metrics
         $totalEmployees = Employee::count();
+        $activeEmployees = Employee::where(function ($q) {
+            $q->where('status', 'active')
+              ->orWhere('status', 'Active')
+              ->orWhereNull('status');
+        })->count();
+        $deactivatedEmployees = Employee::where(function ($q) {
+            $q->where('status', 'inactive')
+              ->orWhere('status', 'Inactive')
+              ->orWhere('status', 'deactivated')
+              ->orWhere('status', 'Deactivated');
+        })->count();
+        $faceEnrolledCount = Employee::where('face_enrolled', true)->count();
+        $fingerprintEnrolledCount = Employee::where('fingerprint_enrolled', true)->count();
 
         // 3. Absent Today = total roster minus those who have already checked in today
         $absentToday = max(0, $totalEmployees - $presentToday);
@@ -52,10 +65,31 @@ class AdminController extends Controller
             ? round(($ontimeEmp / $presentToday) * 100)
             : 0;
 
-        // 7. Devices Online: Count of biometric hubs with status = 'Online'
-        //    (static DB-based count; reflects the last saved status from
-        //    BiometricDeviceController's live fsockopen ping).
-        $devicesOnline = FingerDevices::where('status', 'Online')->count();
+        // 7. Fingerprint Hardware Status Panel Data
+        $fingerDevices = FingerDevices::all();
+        $totalFingerDevices = $fingerDevices->count();
+        $connectedFingerDevices = 0;
+
+        foreach ($fingerDevices as $device) {
+            if ($device->status === 'Blocked' || $device->status === 'Inactive') {
+                $device->is_online = false;
+                continue;
+            }
+
+            $fp = @fsockopen($device->ip, 4370, $errno, $errstr, 0.4);
+            if ($fp) {
+                $connectedFingerDevices++;
+                fclose($fp);
+                $device->is_online = true;
+            } else {
+                $device->is_online = ($device->status === 'Online');
+                if ($device->is_online) {
+                    $connectedFingerDevices++;
+                }
+            }
+        }
+        $offlineFingerDevices = max(0, $totalFingerDevices - $connectedFingerDevices);
+        $devicesOnline = $connectedFingerDevices;
 
         // 8. Today's live attendance log for the table widget
         $todayLogs = Attendance::with(['employee', 'activeBreakLog'])
@@ -107,6 +141,14 @@ class AdminController extends Controller
         return view('admin.index', compact(
             'presentToday',
             'totalEmployees',
+            'activeEmployees',
+            'deactivatedEmployees',
+            'faceEnrolledCount',
+            'fingerprintEnrolledCount',
+            'fingerDevices',
+            'totalFingerDevices',
+            'connectedFingerDevices',
+            'offlineFingerDevices',
             'absentToday',
             'lateArrivals',
             'onBreak',

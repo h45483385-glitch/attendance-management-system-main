@@ -18,7 +18,6 @@ use App\Http\Controllers\FaceController;
 use App\Http\Controllers\PayReportController;
 use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\SalaryMasterController;
-use App\Http\Controllers\AdminSecurityController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
@@ -27,6 +26,7 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\CameraController;
 use App\Http\Controllers\SecuritySettingController;
 use App\Http\Controllers\SecurityDashboardController;
+use App\Http\Controllers\HolidayController;
 
 /*
 |--------------------------------------------------------------------------
@@ -93,11 +93,6 @@ Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin']], function 
     // DASHBOARD
     Route::get('/admin', [AdminController::class, 'index'])->name('admin');
     Route::get('/dashboard', [AttendanceController::class, 'dashboard'])->name('attendance.dashboard');
-
-    // ADMIN SECURITY (OTP)
-    Route::get('/admin/security', [AdminSecurityController::class, 'showChangePasswordForm'])->name('admin.security');
-    Route::post('/admin/security/send-otp', [AdminSecurityController::class, 'sendOtp'])->name('admin.send_otp');
-    Route::post('/admin/security/verify', [AdminSecurityController::class, 'verifyAndUpdate'])->name('admin.verify_update');
 
     // EMPLOYEES
     Route::resource('/employees', EmployeeController::class);
@@ -191,6 +186,13 @@ Route::group(['middleware' => ['auth', 'Role'], 'roles' => ['admin']], function 
     // --- REAL SYSTEM SETTINGS ---
     Route::get('/settings', [SettingController::class, 'index'])->name('admin.settings');
     Route::post('/settings/update', [SettingController::class, 'update'])->name('settings.update');
+
+    // --- ANNUAL HOLIDAY CALENDAR ---
+    Route::get('/settings/holidays', [HolidayController::class, 'index'])->name('holidays.index');
+    Route::post('/settings/holidays', [HolidayController::class, 'store'])->name('holidays.store');
+    Route::put('/settings/holidays/{id}', [HolidayController::class, 'update'])->name('holidays.update');
+    Route::delete('/settings/holidays/{id}', [HolidayController::class, 'destroy'])->name('holidays.destroy');
+    Route::get('/api/holidays/events', [HolidayController::class, 'events'])->name('api.holidays.events');
 });
 
 /*

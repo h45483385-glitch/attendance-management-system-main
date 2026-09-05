@@ -39,14 +39,43 @@ class DatabaseSeeder extends Seeder
             'role_id' => $roleId,
         ]);
 
-        // 4. Create the linked Employee Profile
-        DB::table('employees')->insert([
+        // 4. Create default Work Shift Schedules if not exists
+        $morningShift = DB::table('schedules')->insertGetId([
+            'slug' => 'morning-shift',
+            'time_in' => '09:00:00',
+            'time_out' => '18:00:00',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('schedules')->insert([
+            'slug' => 'mid-shift',
+            'time_in' => '13:00:00',
+            'time_out' => '22:00:00',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('schedules')->insert([
+            'slug' => 'night-shift',
+            'time_in' => '22:00:00',
+            'time_out' => '07:00:00',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // 5. Create the linked Employee Profile
+        $empId = DB::table('employees')->insertGetId([
             'name' => 'Admin User',
             'position' => 'Administrator',
             'email' => 'admin@ams.com',
             'pin_code' => '123',
             'created_at' => now(),
             'updated_at' => now(),
+        ]);
+
+        // 6. Link Employee to Default Shift
+        DB::table('schedule_employees')->insert([
+            'emp_id' => $empId,
+            'schedule_id' => $morningShift,
         ]);
     }
 }

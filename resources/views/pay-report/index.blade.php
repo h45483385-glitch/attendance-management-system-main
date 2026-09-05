@@ -102,8 +102,13 @@
             </div>
             <div class="modal-body p-4 bg-light">
                 
-                <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
-                    <span class="badge bg-success px-3 py-2" style="font-size: 13px;"><i class="fas fa-robot me-1"></i> System Auto-Calculated</span>
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom flex-wrap gap-2">
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <span class="badge bg-success text-white px-3 py-2 mr-2" style="font-size: 12px;"><i class="fas fa-robot mr-1"></i> System Auto-Calculated</span>
+                        <span id="calendarBreakdownBadge" class="badge bg-light text-dark border px-3 py-2" style="font-size: 12px;">
+                            <i class="fas fa-calendar-alt text-primary mr-1"></i> <span id="summaryText">Loading schedule...</span>
+                        </span>
+                    </div>
                     <button type="button" id="editToggleBtn" class="btn btn-outline-secondary btn-sm rounded-pill fw-bold" onclick="toggleEditMode()">
                         <i class="fas fa-edit me-1"></i> Enable Manual Override
                     </button>
@@ -114,7 +119,7 @@
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <label class="text-muted small fw-bold text-uppercase">Month & Year</label>
-                            <input type="text" class="form-control auto-field" name="month_year" value="August-2026" readonly>
+                            <input type="text" class="form-control auto-field" id="month_year" name="month_year" value="{{ \Carbon\Carbon::now()->format('F-Y') }}" readonly>
                         </div>
                         <div class="col-md-6">
                             <label class="text-muted small fw-bold text-uppercase">Total Working Days</label>
@@ -123,13 +128,17 @@
                     </div>
 
                     <div class="row mb-4 p-3 rounded" style="background-color: #fff; border: 1px solid #e9ecef;">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="small fw-bold text-uppercase text-success"><i class="fas fa-calendar-check me-1"></i> Present Days</label>
-                            <input type="number" class="form-control auto-field calc-trigger text-success" name="total_present" id="total_present" value="24" readonly>
+                            <input type="number" class="form-control auto-field calc-trigger text-success" name="total_present" id="total_present" value="0" readonly>
                         </div>
-                        <div class="col-md-6 border-start">
-                            <label class="small fw-bold text-uppercase text-danger"><i class="fas fa-calendar-times me-1"></i> Absent / Leave</label>
-                            <input type="number" class="form-control auto-field calc-trigger text-danger" name="total_absent" id="total_absent" value="2" readonly>
+                        <div class="col-md-4 border-start border-end">
+                            <label class="small fw-bold text-uppercase text-info"><i class="fas fa-umbrella-beach me-1"></i> Paid Leaves</label>
+                            <input type="number" class="form-control auto-field calc-trigger text-info" name="total_leaves" id="total_leaves" value="0" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small fw-bold text-uppercase text-danger"><i class="fas fa-calendar-times me-1"></i> Unpaid Absent</label>
+                            <input type="number" class="form-control auto-field calc-trigger text-danger" name="total_absent" id="total_absent" value="0" readonly>
                         </div>
                     </div>
 
@@ -138,13 +147,17 @@
                             <label class="text-muted small fw-bold text-uppercase">Base Gross (₹)</label>
                             <input type="number" class="form-control auto-field calc-trigger" id="gross_salary" name="gross_salary" value="0" readonly>
                         </div>
-                        <div class="col-md-3">
-                            <label class="text-muted small fw-bold text-uppercase text-info">Per Day Wage (₹)</label>
+                        <div class="col-md-2">
+                            <label class="text-muted small fw-bold text-uppercase text-info">Per Day (₹)</label>
                             <input type="number" class="form-control auto-field calc-trigger text-info" id="per_day_salary" name="per_day_salary" value="0" readonly>
                         </div>
-                        <div class="col-md-3">
-                            <label class="text-muted small fw-bold text-uppercase text-danger">Deductions (₹)</label>
+                        <div class="col-md-2">
+                            <label class="text-muted small fw-bold text-uppercase text-danger">Unpaid Loss (₹)</label>
                             <input type="number" class="form-control auto-field calc-trigger text-danger" id="deductions" name="deductions" value="0" readonly>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="text-muted small fw-bold text-uppercase text-warning" style="color: #d97706 !important;">Late Penalties (₹)</label>
+                            <input type="number" class="form-control auto-field calc-trigger text-warning" id="penalties_field" name="penalties_amount" value="0" readonly style="font-weight: 700;">
                         </div>
                         <div class="col-md-3">
                             <label class="text-muted small fw-bold text-uppercase" style="color: #5867dd;">Final Net (₹)</label>
@@ -193,38 +206,53 @@
         }
     }
 
-    // Mathematical Calculation Logic including Per Day Wage
+    function recalculatePayroll() {
+        let gross = parseFloat(document.getElementById('gross_salary').value) || 0;
+        let workDays = parseFloat(document.getElementById('total_working_days').value) || 0;
+        let present = parseFloat(document.getElementById('total_present').value) || 0;
+        let leaves = parseFloat(document.getElementById('total_leaves').value) || 0;
+        let absent = parseFloat(document.getElementById('total_absent').value) || 0;
+        let penalties = parseFloat(document.getElementById('penalties_field').value) || 0;
+
+        if (workDays > 0) {
+            let perDay = gross / workDays;
+            let unpaidDeduction = Math.round(perDay * absent);
+            let finalNet = Math.max(0, Math.round(gross - unpaidDeduction - penalties));
+            
+            document.getElementById('per_day_salary').value = perDay.toFixed(2);
+            document.getElementById('deductions').value = unpaidDeduction;
+            document.getElementById('net_salary').value = finalNet;
+        } else {
+            document.getElementById('per_day_salary').value = '0.00';
+            document.getElementById('deductions').value = '0';
+            document.getElementById('net_salary').value = gross;
+        }
+    }
+
+    // Mathematical Calculation Logic including Per Day Wage & Leave Isolation
     document.querySelectorAll('.calc-trigger').forEach(input => {
         input.addEventListener('input', function(e) {
-            let gross = parseFloat(document.getElementById('gross_salary').value) || 0;
             let workDays = parseFloat(document.getElementById('total_working_days').value) || 0;
             let present = parseFloat(document.getElementById('total_present').value) || 0;
+            let leaves = parseFloat(document.getElementById('total_leaves').value) || 0;
             let absent = parseFloat(document.getElementById('total_absent').value) || 0;
 
-            if (e.target.id === 'total_present' || e.target.id === 'total_working_days') {
-                absent = workDays - present;
-                if(absent < 0) absent = 0;
+            if (e.target.id === 'total_present' || e.target.id === 'total_leaves' || e.target.id === 'total_working_days') {
+                absent = workDays - (present + leaves);
+                if (absent < 0) absent = 0;
                 document.getElementById('total_absent').value = absent;
             } 
             else if (e.target.id === 'total_absent') {
-                present = workDays - absent;
-                if(present < 0) present = 0;
+                present = workDays - (absent + leaves);
+                if (present < 0) present = 0;
                 document.getElementById('total_present').value = present;
             }
 
-            if(workDays > 0) {
-                let perDay = gross / workDays;
-                let deduct = Math.round(perDay * absent);
-                let net = gross - deduct;
-                
-                document.getElementById('per_day_salary').value = perDay.toFixed(2);
-                document.getElementById('deductions').value = deduct;
-                document.getElementById('net_salary').value = net;
-            }
+            recalculatePayroll();
         });
     });
 
-    // 🚀 DYNAMIC AJAX FETCH LOGIC WITH PENALTIES INTEGRATION
+    // 🚀 DYNAMIC AJAX FETCH LOGIC WITH REAL-TIME ATTENDANCE & PENALTY ISOLATION
     function fetchPayData(employeeId) {
         fetch(`/pay-report/fetch/${employeeId}`)
             .then(response => response.json())
@@ -232,27 +260,30 @@
                 if(data.success) {
                     document.getElementById('modalPayslipTitle').innerHTML = `<i class="fas fa-file-invoice me-2"></i> Payroll Summary - #${employeeId} (${data.employee_name} - ${data.position})`;
                     
-                    let grossInput = document.getElementById('gross_salary');
-                    grossInput.value = data.base_salary;
-                    
-                    grossInput.dispatchEvent(new Event('input', { bubbles: true }));
-
-                    // Add Penalties from Time Exceptions to Deductions automatically
-                    if(data.penalties > 0) {
-                        let currentDeductions = parseFloat(document.getElementById('deductions').value) || 0;
-                        let newTotalDeductions = currentDeductions + parseFloat(data.penalties);
-                        
-                        document.getElementById('deductions').value = newTotalDeductions;
-                        
-                        let gross = parseFloat(grossInput.value) || 0;
-                        let net = gross - newTotalDeductions;
-                        document.getElementById('net_salary').value = net;
+                    if (data.billing_month) {
+                        document.getElementById('month_year').value = data.billing_month;
                     }
+
+                    if (data.calendar_days !== undefined) {
+                        let overlapNote = data.overlapping_holidays > 0 ? ` (${data.overlapping_holidays} overlapped with weekend)` : '';
+                        document.getElementById('summaryText').innerText = 
+                            `${data.calendar_days} Days Month: ${data.total_working_days} Workdays | ${data.weekend_days} Weekends | ${data.total_holidays} Holidays${overlapNote}`;
+                    }
+
+                    document.getElementById('total_working_days').value = data.total_working_days || 26;
+                    document.getElementById('total_present').value = data.present_days !== undefined ? data.present_days : 0;
+                    document.getElementById('total_leaves').value = data.leave_days !== undefined ? data.leave_days : 0;
+                    document.getElementById('total_absent').value = data.absent_days !== undefined ? data.absent_days : 0;
+                    
+                    document.getElementById('gross_salary').value = data.base_salary || 0;
+                    document.getElementById('penalties_field').value = data.penalties || 0;
+
+                    recalculatePayroll();
                 } else {
-                    console.log('Error:', data.message);
-                    let grossInput = document.getElementById('gross_salary');
-                    grossInput.value = 0;
-                    grossInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    console.error('Error:', data.message);
+                    document.getElementById('gross_salary').value = 0;
+                    document.getElementById('penalties_field').value = 0;
+                    recalculatePayroll();
                 }
             })
             .catch(error => {

@@ -35,6 +35,7 @@
                         <li><a href="{{ route('check') }}" class="{{ request()->is('check') ? 'active' : '' }}">Today's Live Sheet</a></li>
                         <li><a href="{{ route('sheet-report') }}" class="{{ request()->is('sheet-report') ? 'active' : '' }}">Master Attendance</a></li>
                         <li><a href="{{ route('overtime') }}" class="{{ request()->is('overtime') ? 'active' : '' }}">Overtime Approvals</a></li>
+                        <li><a href="{{ route('kiosk.view') }}" target="_blank" class="{{ request()->is('kiosk') ? 'active' : '' }}"><i class="ti-fullscreen mr-1 text-primary"></i> Attendance Kiosk</a></li>
                     </ul>
                 </li>
 
@@ -62,7 +63,7 @@
 
                 @if(auth()->user() && (auth()->user()->hasAnyRole(['admin', 'receptionist'])))
                 <li class="menu-title">Visitors</li>
-                <li>
+                <li class="dropup-item">
                     <a href="javascript:void(0);" class="waves-effect has-arrow {{ request()->is('visitor-checkin', 'visitor-logs') ? 'active' : '' }}" title="Visitor Management">
                         <i class="dripicons-user-group"></i><span> Visitor Management </span>
                     </a>
@@ -76,7 +77,7 @@
 
                 @if(auth()->user()->hasPermission('users.view') || auth()->user()->hasPermission('roles.view') || auth()->user()->hasPermission('devices.view') || auth()->user()->hasPermission('cameras.view') || auth()->user()->hasPermission('audit_logs.view') || auth()->user()->hasPermission('security.view'))
                 <li class="menu-title">Administration</li>
-                <li>
+                <li class="dropup-item">
                     <a href="javascript:void(0);" class="waves-effect has-arrow {{ request()->is('users*', 'roles*', 'finger_device*', 'cameras*', 'audit-logs*', 'security*') ? 'active' : '' }}" title="Admin & Security">
                         <i class="ti-shield"></i><span> Admin & Security </span>
                     </a>
@@ -111,6 +112,11 @@
                 <li>
                     <a href="{{ route('admin.settings') }}" class="waves-effect {{ request()->is('settings') ? 'mm active' : '' }}" title="Settings">
                         <i class="ti-settings"></i> <span> Settings </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('holidays.index') }}" class="waves-effect {{ request()->is('settings/holidays*') ? 'mm active' : '' }}" title="Holiday Calendar">
+                        <i class="ti-calendar"></i> <span> Holidays Calendar </span>
                     </a>
                 </li>
 

@@ -10,15 +10,34 @@
     <!-- SweetAlert for Popups -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body class="bg-gray-50 h-screen flex flex-col items-center justify-center relative">
+<body class="bg-slate-900 min-h-screen flex flex-col items-center justify-center relative p-4 font-sans text-slate-800">
+    
+    <!-- Top Bar with Back to Admin Button -->
+    <div class="absolute top-4 left-4 right-4 flex justify-between items-center z-20">
+        <div class="flex items-center space-x-2 text-white/90">
+            <i class="fa-solid fa-fingerprint text-emerald-400 text-xl"></i>
+            <span class="font-bold tracking-wide text-sm">AMS KIOSK TERMINAL</span>
+        </div>
+        <a href="{{ route('admin') }}" class="bg-white/10 hover:bg-white/20 text-white text-xs font-semibold py-2 px-3.5 rounded-lg border border-white/20 backdrop-blur-sm transition flex items-center gap-1.5">
+            <i class="fa-solid fa-arrow-left text-[11px]"></i> Exit to Dashboard
+        </a>
+    </div>
 
-    <div class="bg-white p-8 rounded-xl shadow-lg text-center max-w-lg w-full relative z-10">
-        <h1 class="text-3xl font-bold mb-2 text-gray-800">Daily Kiosk</h1>
+    <div class="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-lg w-full relative z-10 border border-slate-100 mt-8">
+        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner text-xl">
+            <i class="fa-solid fa-camera-retro"></i>
+        </div>
+        <h1 class="text-2xl font-bold mb-1 text-slate-800">Daily Attendance Kiosk</h1>
+        <p class="text-xs text-slate-500 mb-5">Continuous Biometric & Pin Clock-In/Clock-Out Terminal</p>
         
         <!-- Toggle Tabs -->
-        <div class="flex justify-center mb-4 border-b border-gray-200">
-            <button id="tab-face" class="px-4 py-2 border-b-2 border-blue-600 text-blue-600 font-semibold focus:outline-none transition-colors">Face ID</button>
-            <button id="tab-fallback" class="px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-semibold focus:outline-none transition-colors">Credential Login</button>
+        <div class="flex justify-center mb-5 border-b border-slate-200">
+            <button id="tab-face" class="px-5 py-2.5 border-b-2 border-blue-600 text-blue-600 font-bold text-sm focus:outline-none transition-colors flex items-center gap-2">
+                <i class="fa-solid fa-face-smile"></i> Face ID
+            </button>
+            <button id="tab-fallback" class="px-5 py-2.5 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-bold text-sm focus:outline-none transition-colors flex items-center gap-2">
+                <i class="fa-solid fa-key"></i> Credential Login
+            </button>
         </div>
 
         <!-- FACE ID SECTION -->

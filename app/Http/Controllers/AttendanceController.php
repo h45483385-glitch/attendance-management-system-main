@@ -68,6 +68,9 @@ class AttendanceController extends Controller
 
                     $status = 'Absent';
 
+                    $setting = \App\Models\Setting::first();
+                    $fullDayMinutes = ($setting && $setting->min_full_day_hours) ? ($setting->min_full_day_hours * 60) : 480;
+
                     if ($date === $todayStr && empty($lastLog->check_out_time)) {
                         if ($lastLog->shift_status === 'On Break') {
                             $status = 'Break Time';
@@ -77,7 +80,7 @@ class AttendanceController extends Controller
                     } elseif ($date !== $todayStr && $hasMissingPunchOut) {
                         $status = 'Missing Punch';
                     } else {
-                        if ($totalMins >= 480) {
+                        if ($totalMins >= $fullDayMinutes) {
                             $status = 'Present';
                         } elseif ($totalMins > 0) {
                             $status = 'Partial Shift';
@@ -90,7 +93,7 @@ class AttendanceController extends Controller
                         'status' => $status
                     ]);
 
-                    if ($totalMins >= 480 || ($date === $todayStr && empty($lastLog->check_out_time))) {
+                    if ($totalMins >= $fullDayMinutes || ($date === $todayStr && empty($lastLog->check_out_time))) {
                         $presentDays++;
                     }
                 }

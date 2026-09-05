@@ -12,25 +12,41 @@ class CheckController extends Controller
 {
     public function index()
     {
-        $attendances = Attendance::with('employee')
-            ->whereDate('attendance_date', Carbon::today())
+        $today = Carbon::today();
+        $yesterday = Carbon::yesterday();
+
+        // Include today's punches and open overnight punches from yesterday
+        $attendances = Attendance::with('employee.schedules')
+            ->where(function($q) use ($today, $yesterday) {
+                $q->whereDate('attendance_date', $today)
+                  ->orWhere(function($sub) use ($yesterday) {
+                      // Yesterday's records that were checked in after 18:00 (night shifts)
+                      $sub->whereDate('attendance_date', $yesterday)
+                          ->where('attendance_time', '>=', '18:00:00');
+                  });
+            })
+            ->orderBy('attendance_date', 'asc')
             ->orderBy('attendance_time', 'asc')
             ->get();
 
-        $dailyAttendances = $attendances->groupBy('emp_id')->map(function ($records) {
+        $dailyAttendances = $attendances->groupBy('emp_id')->map(function ($records) use ($today) {
             $firstRecord = $records->first();
             $latestRecord = $records->sortByDesc('updated_at')->first();
 
             $totalMins = 0;
             $isCurrentlyWorking = false;
 
-            // Calculate total minutes across all punches for today
+            // Calculate total minutes across all punches
             foreach($records as $log) {
                 $cleanDate = Carbon::parse($log->attendance_date)->format('Y-m-d');
                 $checkIn = Carbon::parse($cleanDate . ' ' . $log->attendance_time);
                 
                 if ($log->check_out_time) {
                     $checkOut = Carbon::parse($cleanDate . ' ' . $log->check_out_time);
+                    if ($checkOut->lessThan($checkIn)) {
+                        // Rollover across midnight
+                        $checkOut->addDay();
+                    }
                     $totalMins += $checkIn->diffInMinutes($checkOut);
                 } else {
                     $totalMins += $checkIn->diffInMinutes(Carbon::now());
@@ -38,12 +54,15 @@ class CheckController extends Controller
                 }
             }
 
+            $setting = \App\Models\Setting::first();
+            $fullDayMinutes = ($setting && $setting->min_full_day_hours) ? ($setting->min_full_day_hours * 60) : 480;
+
             // DYNAMIC STATUS LOGIC FOR DAILY SHEET
             if ($latestRecord->shift_status === 'On Break') {
                 $status = 'On Break';
             } elseif ($isCurrentlyWorking) {
                 $status = 'In Progress';
-            } elseif ($totalMins >= 480) {
+            } elseif ($totalMins >= $fullDayMinutes) {
                 $status = 'Present';
             } elseif ($totalMins > 0) {
                 $status = 'Partial Shift';
@@ -84,10 +103,14 @@ class CheckController extends Controller
                             
                             $schedule = $employee->schedules->first();
                             $employeeStartTime = $schedule ? $schedule->time_in : '09:30:00';
+                            $setting = \App\Models\Setting::first();
+                            $gracePeriod = $setting ? (int)$setting->grace_period : 10;
+
                             $shiftStart = Carbon::parse($keys . ' ' . $employeeStartTime);
+                            $lateThreshold = $shiftStart->copy()->addMinutes($gracePeriod);
                             $timeIn = Carbon::parse($keys . ' ' . $data->attendance_time);
                             
-                            $isLate = ($timeIn->greaterThan($shiftStart)) ? 0 : 1;
+                            $isLate = ($timeIn->greaterThan($lateThreshold)) ? 0 : 1;
                             $data->status = $isLate;
                             
                             $data->save();
@@ -108,14 +131,28 @@ class CheckController extends Controller
                                 ->whereType(1)
                                 ->first()
                         ) {
-                            $data = new Leave();
-                            $data->emp_id = $key;
-                            
-                            $schedule = $employee->schedules->first();
-                            $data->leave_time = $schedule ? $schedule->time_out : '18:00:00';
-                            $data->leave_date = $keys;
-                            
-                            $data->save();
+                        // Annual Leave Quota Enforcement from Setting
+                        $setting = \App\Models\Setting::first();
+                        $annualQuota = $setting ? ($setting->casual_leaves + $setting->medical_leaves) : 18;
+                        $leaveYear = Carbon::parse($keys)->year;
+
+                        $usedLeavesThisYear = Leave::where('emp_id', $key)
+                            ->whereYear('leave_date', $leaveYear)
+                            ->count();
+
+                        if ($usedLeavesThisYear >= $annualQuota) {
+                            flash()->error('Quota Exceeded', "Leave rejected for {$employee->name}: Annual leave quota ({$annualQuota} days) has already been exhausted.");
+                            continue;
+                        }
+
+                        $data = new Leave();
+                        $data->emp_id = $key;
+                        
+                        $schedule = $employee->schedules->first();
+                        $data->leave_time = $schedule ? $schedule->time_out : '18:00:00';
+                        $data->leave_date = $keys;
+                        
+                        $data->save();
                         }
                     }
                 }

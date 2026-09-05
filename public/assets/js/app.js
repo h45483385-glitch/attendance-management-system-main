@@ -48,6 +48,59 @@
             event.preventDefault();
             $("body").toggleClass("enlarged");
         });
+
+        // When in collapsed/enlarged mode, clicking a menu category expands sidebar and opens submenu
+        $('#side-menu').on('click', 'li > a.has-arrow', function (e) {
+            if ($('body').hasClass('enlarged')) {
+                $('body').removeClass('enlarged');
+                var $parentLi = $(this).parent('li');
+                setTimeout(function() {
+                    if (!$parentLi.hasClass('mm-active')) {
+                        $parentLi.addClass('mm-active');
+                        $parentLi.children('ul.submenu').addClass('mm-show').slideDown(150);
+                    }
+                }, 50);
+            }
+        });
+
+        // Smoothly scroll expanded submenu into view if near bottom edge
+        $('#side-menu').on('shown.metisMenu', function (e) {
+            var $target = $(e.target);
+            var $sidebar = $('.left.side-menu');
+            if ($sidebar.length && $target.length) {
+                var targetOffset = $target.offset().top + $target.outerHeight();
+                var sidebarBottom = $sidebar.offset().top + $sidebar.innerHeight();
+                if (targetOffset > sidebarBottom) {
+                    $sidebar.animate({
+                        scrollTop: $sidebar.scrollTop() + (targetOffset - sidebarBottom) + 20
+                    }, 250);
+                }
+            }
+        });
+
+        // Dynamic Viewport Boundary Detection for Collapsed/Enlarged Mode Flyout Submenus
+        $('#side-menu').on('mouseenter', '> li', function () {
+            if ($('body').hasClass('enlarged')) {
+                var $li = $(this);
+                var $submenu = $li.children('ul.submenu');
+                if ($submenu.length) {
+                    // Temporarily check expected bottom position against viewport
+                    var itemTop = $li.offset().top - $(window).scrollTop();
+                    var estimatedHeight = $submenu.outerHeight() || ($submenu.children('li').length * 44 + 40);
+                    var windowHeight = $(window).height();
+
+                    // If menu would extend past bottom margin (within 30px of window edge), flip upward
+                    if (itemTop + estimatedHeight > windowHeight - 30) {
+                        $li.addClass('dropup-item');
+                    } else {
+                        // Keep manual dropup-item if already declared in blade, or preserve alignment
+                        if (!$li.hasClass('force-dropup')) {
+                            $li.removeClass('dropup-item');
+                        }
+                    }
+                }
+            }
+        });
     },
 
     MainApp.prototype.initEnlarge = function () {
