@@ -13,5 +13,10 @@ class VerifyCsrfToken extends Middleware
      */
     protected $except = [
         'api/*', // ✅ allow all API routes (fixes 419 error)
+        'employees/*/capture-face',
+        'scan-face',
+        'fallback-checkin',
+        'face-login',
+        'webauthn/*',
     ];
 }

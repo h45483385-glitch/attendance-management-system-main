@@ -49,7 +49,7 @@
                             </td>
                             <td class="align-middle text-end">
                                 <!-- பட்டன் இப்போது பக்காவாக வேலை செய்யும் (data-toggle and data-bs-toggle added for cross compatibility) -->
-                                @if(auth()->user() && \App\Models\User::hasRole('admin'))
+                                @if(auth()->user() && auth()->user()->hasRole('admin'))
                                     <button class="btn btn-sm btn-outline-primary fw-bold rounded-pill px-3" data-toggle="modal" data-target="#editSalaryModal{{ $sal->id }}" data-bs-toggle="modal" data-bs-target="#editSalaryModal{{ $sal->id }}">
                                         <i class="fas fa-edit me-1"></i> Update Salary
                                     </button>

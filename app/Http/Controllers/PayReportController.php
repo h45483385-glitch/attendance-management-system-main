@@ -12,8 +12,19 @@ class PayReportController extends Controller
 {
     public function index()
     {
-        // Fetch all employees and salary master values
-        $employees = Employee::all();
+        $user = auth()->user();
+
+        // 🔒 RBAC DATA SCOPE: Employee may only load their own record.
+        // Admin loads the full employee list.
+        if ($user->hasRole('employee')) {
+            $linkedEmployee = \Illuminate\Support\Facades\Schema::hasColumn('employees', 'user_id')
+                ? (Employee::where('user_id', $user->id)->first() ?: Employee::where('email', $user->email)->first())
+                : Employee::where('email', $user->email)->first();
+            $employees = $linkedEmployee ? collect([$linkedEmployee]) : collect();
+        } else {
+            $employees = Employee::all();
+        }
+
         $salaryMasters = SalaryMaster::all();
         
         $departments = $salaryMasters->pluck('department')->unique()->values();
@@ -26,8 +37,8 @@ class PayReportController extends Controller
         });
 
         return view('pay-report.index')->with([
-            'employees' => $employees,
-            'departments' => $departments,
+            'employees'           => $employees,
+            'departments'         => $departments,
             'salaryMastersByDept' => $salaryMastersByDept
         ]);
     }
@@ -35,6 +46,19 @@ class PayReportController extends Controller
     // 🚀 JS-ல் இருந்து fetchPayData(id) என்று அழைக்கும்போது துல்லியமான சம்பளம் மற்றும் பெனால்டி டேட்டாவை அனுப்பும் API
     public function fetchPayData($id)
     {
+        $user = auth()->user();
+
+        // 🔒 OWNERSHIP GATE: An employee can ONLY fetch their own pay data.
+        // If they manually hit /pay-report/fetch/3, they get a 403.
+        if ($user->hasRole('employee')) {
+            $linkedEmployee = \Illuminate\Support\Facades\Schema::hasColumn('employees', 'user_id')
+                ? (Employee::where('user_id', $user->id)->first() ?: Employee::where('email', $user->email)->first())
+                : Employee::where('email', $user->email)->first();
+            if (!$linkedEmployee || (int)$linkedEmployee->id !== (int)$id) {
+                abort(403, 'You are not authorized to view this pay data.');
+            }
+        }
+
         $employee = Employee::find($id);
         
         if(!$employee) {

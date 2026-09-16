@@ -76,7 +76,7 @@
                                                     <i class="ti-check mr-1"></i> Done ({{ $lateRecord->resolution_status }})
                                                 </span>
                                             @else
-                                                @if(auth()->user() && \App\Models\User::hasRole('admin'))
+                                                @if(auth()->user() && auth()->user()->hasRole('admin'))
                                                     <button onclick="takeAction('approve', '{{ optional($lateRecord->employee)->name }}', '{{ $lateRecord->id }}')" class="btn btn-sm btn-outline-success rounded-pill px-3 mr-1" title="Approve Late Arrival">Approve</button>
                                                     <button onclick="takeAction('reject', '{{ optional($lateRecord->employee)->name }}', '{{ $lateRecord->id }}')" class="btn btn-sm btn-outline-danger rounded-pill px-3" title="Reject Late Arrival">Reject</button>
                                                 @else

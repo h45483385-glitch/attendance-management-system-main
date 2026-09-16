@@ -24,7 +24,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        // Automatically purge visitor records older than 30 days
+        $schedule->command('visitors:prune-expired --days=30')->daily();
     }
 
     /**

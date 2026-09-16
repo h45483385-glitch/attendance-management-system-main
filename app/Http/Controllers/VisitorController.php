@@ -130,4 +130,31 @@ class VisitorController extends Controller
         }
         exit;
     }
+
+    /**
+     * Data Lifecycle Enforcement: Purge visitor records older than 30 days
+     */
+    public function pruneExpired(Request $request)
+    {
+        $days = (int) $request->input('days', 30);
+        $cutoffDate = Carbon::now()->subDays($days);
+
+        $expiredVisitors = Visitor::where('created_at', '<', $cutoffDate)->get();
+        $count = $expiredVisitors->count();
+
+        foreach ($expiredVisitors as $visitor) {
+            if ($visitor->photo_path && Storage::disk('s3')->exists($visitor->photo_path)) {
+                Storage::disk('s3')->delete($visitor->photo_path);
+            }
+            $visitor->delete();
+        }
+
+        \App\Services\AuditLogger::log(
+            'VISITOR_DATA_LIFECYCLE_MANUAL_PRUNE',
+            'Visitor Management',
+            "Manual cleanup by " . auth()->user()->name . ": Purged {$count} visitor records older than {$days} days."
+        );
+
+        return redirect()->back()->with('success', "Data Lifecycle: {$count} visitor records older than {$days} days were permanently purged.");
+    }
 }

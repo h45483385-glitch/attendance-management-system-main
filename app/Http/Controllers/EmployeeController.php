@@ -269,6 +269,14 @@ class EmployeeController extends Controller
             ], 503);
         }
 
+        // STRICT PERMISSION: Only Admin can update or enroll employee photos
+        if (!auth()->check() || !auth()->user()->hasRole('admin')) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Unauthorized action. Updating or enrolling employee photos is strictly restricted to the Admin role.'
+            ], 403);
+        }
+
         try {
             if (!$request->has('image') || empty($request->image)) {
                 return response()->json(['status' => false, 'message' => 'No image data received.']);
@@ -324,7 +332,8 @@ class EmployeeController extends Controller
                     'CollectionId'        => 'pragnaware-employee-faces',
                     'Image'               => ['Bytes' => $imageData],
                     'ExternalImageId'     => (string) $employee->id,
-                    'DetectionAttributes' => ['DEFAULT']
+                    'DetectionAttributes' => ['DEFAULT'],
+                    'QualityFilter'       => 'LOW',
                 ]);
 
                 if (empty($result['FaceRecords'])) {
@@ -355,5 +364,47 @@ class EmployeeController extends Controller
                 'message' => 'Server Error: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Delete employee facial photo and unenroll face (Strictly Admin only)
+     */
+    public function deletePhoto(Employee $employee)
+    {
+        if (!auth()->check() || !auth()->user()->hasRole('admin')) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Unauthorized action. Only Admin role can delete employee photos.'
+            ], 403);
+        }
+
+        if ($employee->face_photo_path) {
+            try {
+                $parsedPath = parse_url($employee->face_photo_path, PHP_URL_PATH);
+                $s3Key = ltrim($parsedPath, '/');
+                if (\Illuminate\Support\Facades\Storage::disk('s3')->exists($s3Key)) {
+                    \Illuminate\Support\Facades\Storage::disk('s3')->delete($s3Key);
+                }
+            } catch (\Exception $e) {
+                Log::warning("S3 photo deletion exception: " . $e->getMessage());
+            }
+        }
+
+        $employee->face_photo_path = null;
+        $employee->face_enrolled = false;
+        $employee->save();
+
+        \App\Services\AuditLogger::log(
+            'EMPLOYEE_PHOTO_DELETED',
+            'Employee Management',
+            "Admin " . auth()->user()->name . " deleted facial biometric photo for Employee #{$employee->id} ({$employee->name}).",
+            Employee::class,
+            $employee->id
+        );
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Employee biometric face photo deleted successfully.'
+        ]);
     }
 }

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\Employee;
+use App\Services\FaceMismatchAlertService;
 
 class FaceController extends Controller
 {
@@ -46,12 +47,13 @@ class FaceController extends Controller
                 ],
             ]);
 
-            // 3. Search Faces
+            // 3. Search Faces (Enhanced for standard webcams & low-res 40-80px image tolerance)
             $result = $rekognition->searchFacesByImage([
-                'CollectionId' => 'pragnaware-employee-faces', 
-                'Image' => ['Bytes' => $imageBytes],
-                'MaxFaces' => 1,
-                'FaceMatchThreshold' => 90, 
+                'CollectionId'       => 'pragnaware-employee-faces', 
+                'Image'              => ['Bytes' => $imageBytes],
+                'MaxFaces'           => 1,
+                'FaceMatchThreshold' => 80, 
+                'QualityFilter'      => 'LOW',
             ]);
 
             // 4. Handle Logic
@@ -65,6 +67,7 @@ class FaceController extends Controller
                 $employeeExists = Employee::find($employeeId);
                 
                 if (!$employeeExists) {
+                    FaceMismatchAlertService::triggerMismatchAlert("Face matched with ID #{$employeeId} but no corresponding employee record was found in database.", $request->ip());
                     return response()->json([
                         'success' => false, 
                         'message' => 'Unrecognized Face / Employee ID (' . $employeeId . ') not found in database.'
@@ -188,9 +191,10 @@ class FaceController extends Controller
                 ]);
 
             } else {
+                FaceMismatchAlertService::triggerMismatchAlert("Biometric face scan failed to match any enrolled staff profile.", $request->ip());
                 return response()->json([
                     'success' => false,
-                    'message' => 'No face detected or recognized. Please ensure you are well-lit and looking at the camera.'
+                    'message' => 'No face recognized. Please ensure you are well-lit and looking directly at the camera.'
                 ]);
             }
 

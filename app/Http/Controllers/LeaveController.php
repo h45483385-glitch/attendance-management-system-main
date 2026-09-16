@@ -14,7 +14,22 @@ class LeaveController extends Controller
 {
     public function index()
     {
-        return view('admin.leave')->with(['leaves' => Leave::all()]);
+        $user = auth()->user();
+
+        // 🔒 RBAC DATA SCOPE: Employee may only see their own leave records.
+        // Admin sees all leave requests across the organisation.
+        if ($user->hasRole('employee')) {
+            $linkedEmployee = \Illuminate\Support\Facades\Schema::hasColumn('employees', 'user_id')
+                ? (Employee::where('user_id', $user->id)->first() ?: Employee::where('email', $user->email)->first())
+                : Employee::where('email', $user->email)->first();
+            $leaves = $linkedEmployee
+                ? Leave::where('emp_id', $linkedEmployee->id)->get()
+                : collect();
+        } else {
+            $leaves = Leave::all();
+        }
+
+        return view('admin.leave')->with(['leaves' => $leaves]);
     }
 
     // Overtime Controller Logic separating Individual Wallet vs Global Admin Approval

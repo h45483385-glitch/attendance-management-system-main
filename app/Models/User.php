@@ -47,21 +47,21 @@ class User extends Authenticatable
     /**
      * SAFE role check (prevents crash)
      */
-    public static function hasRole($role)
+    public function hasRole($role)
     {
-        $user = auth()->user();
-
-        if (!$user) {
-            return false;
+        // Support alias for Developer / IT role
+        if ($role === 'developer-it' && ($this->role === 'it-support' || $this->roles()->where('slug', 'it-support')->exists())) {
+            return true;
+        }
+        if ($role === 'it-support' && ($this->role === 'developer-it' || $this->roles()->where('slug', 'developer-it')->exists())) {
+            return true;
         }
 
-        $firstRole = $user->roles()->first();
-
-        if (!$firstRole) {
-            return false;
+        if (isset($this->role) && $this->role === $role) {
+            return true;
         }
 
-        return $firstRole->slug === $role;
+        return $this->roles()->where('slug', $role)->exists();
     }
 
     /**

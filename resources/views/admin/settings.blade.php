@@ -216,7 +216,7 @@
             </div>
             <div class="modal-footer bg-light">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                @if(auth()->user() && \App\Models\User::hasRole('admin'))
+                @if(auth()->user() && auth()->user()->hasRole('admin'))
                     <button type="submit" class="btn btn-primary font-weight-bold">Save Timings</button>
                 @endif
             </div>
@@ -249,7 +249,7 @@
             </div>
             <div class="modal-footer bg-light">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                @if(auth()->user() && \App\Models\User::hasRole('admin'))
+                @if(auth()->user() && auth()->user()->hasRole('admin'))
                     <button type="submit" class="btn btn-success font-weight-bold">Update Calendar</button>
                 @endif
             </div>
@@ -284,7 +284,7 @@
             </div>
             <div class="modal-footer bg-light">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                @if(auth()->user() && \App\Models\User::hasRole('admin'))
+                @if(auth()->user() && auth()->user()->hasRole('admin'))
                     <button type="submit" class="btn btn-warning text-dark font-weight-bold">Save Leave Rules</button>
                 @endif
             </div>
@@ -341,7 +341,7 @@
             </div>
             <div class="modal-footer bg-light">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                @if(auth()->user() && \App\Models\User::hasRole('admin'))
+                @if(auth()->user() && auth()->user()->hasRole('admin'))
                     <button type="submit" class="btn btn-primary font-weight-bold">Save Company Profile</button>
                 @endif
             </div>
@@ -382,7 +382,7 @@
             </div>
             <div class="modal-footer bg-light">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                @if(auth()->user() && \App\Models\User::hasRole('admin'))
+                @if(auth()->user() && auth()->user()->hasRole('admin'))
                     <button type="submit" class="btn btn-warning text-dark font-weight-bold">Update Notification Rules</button>
                 @endif
             </div>

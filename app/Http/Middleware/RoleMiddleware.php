@@ -16,7 +16,7 @@ class RoleMiddleware
     public function handle($request, Closure $next)
     {
         if (auth()->user() === null) {
-            abort(403, 'Unauthorized action.');
+            return redirect()->route('login');
         }
 
 

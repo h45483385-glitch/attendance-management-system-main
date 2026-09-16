@@ -103,13 +103,23 @@ class LoginController extends Controller
         if ($user->role === 'admin' || $user->hasRole('admin')) {
             return redirect()->route('admin'); // Main Admin Dashboard
         }
-        
-        // 2. RECEPTIONIST / SECURITY LOGIC (ரிசப்ஷன் லாகின் செய்தால்)
-        elseif ($user->role === 'receptionist' || $user->role === 'security' || $user->hasRole('receptionist')) {
+
+        // 2. IT SUPPORT LOGIC
+        elseif ($user->role === 'it-support' || $user->hasRole('it-support')) {
+            return redirect()->route('it-support.dashboard');
+        }
+
+        // 3. RECEPTIONIST LOGIC
+        elseif ($user->role === 'receptionist' || $user->hasRole('receptionist')) {
+            return redirect()->route('receptionist.dashboard');
+        }
+
+        // 4. SECURITY LOGIC
+        elseif ($user->role === 'security' || $user->hasRole('security')) {
             return redirect()->route('admin.visitor_index'); // Visitor Logs Page
         }
 
-        // 3. EMPLOYEE / STAFF LOGIC (எம்ப்ளாயி லாகின் செய்தால்)
+        // 5. EMPLOYEE / STAFF LOGIC (எம்ப்ளாயி லாகின் செய்தால்)
         elseif ($user->role === 'employee' || $user->role === 'staff' || $user->hasRole('employee')) {
             return redirect()->route('attendance.dashboard'); // Personal Dashboard
         }

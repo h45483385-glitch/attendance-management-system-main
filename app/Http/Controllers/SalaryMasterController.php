@@ -37,6 +37,19 @@ class SalaryMasterController extends Controller
 
     public function update(Request $request, $id)
     {
+        // STRICT PERMISSION GUARD: Only Admin, HR, and Manager roles can modify salaries
+        $user = auth()->user();
+        if (!$user || (!$user->hasAnyRole(['admin', 'hr', 'manager']) && !$user->hasPermission('salary.manage'))) {
+            \App\Services\AuditLogger::log(
+                'UNAUTHORIZED_SALARY_MODIFICATION_ATTEMPT',
+                'Security',
+                "Unauthorized user #{$user->id} ({$user->name}) attempted to modify salary structure ID #{$id}.",
+                SalaryMaster::class,
+                $id
+            );
+            abort(403, 'Unauthorized action. Modifying salaries or applying deductions is strictly restricted to Admin, HR, and Manager roles.');
+        }
+
         $request->validate([
             'new_salary' => 'required|numeric|min:1000',
             'effective_timer' => 'required|in:immediate,next_month,custom',

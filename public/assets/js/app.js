@@ -78,26 +78,49 @@
             }
         });
 
-        // Dynamic Viewport Boundary Detection for Collapsed/Enlarged Mode Flyout Submenus
-        $('#side-menu').on('mouseenter', '> li', function () {
-            if ($('body').hasClass('enlarged')) {
-                var $li = $(this);
-                var $submenu = $li.children('ul.submenu');
-                if ($submenu.length) {
-                    // Temporarily check expected bottom position against viewport
-                    var itemTop = $li.offset().top - $(window).scrollTop();
-                    var estimatedHeight = $submenu.outerHeight() || ($submenu.children('li').length * 44 + 40);
-                    var windowHeight = $(window).height();
+        // Dynamic Viewport & Fixed Positioning for Collapsed/Enlarged Mode Flyout Submenus & Tooltips
+        function updateFlyoutPosition($li) {
+            if (!$('body').hasClass('enlarged') || !$li || !$li.length) return;
+            var el = $li[0];
+            if (!el) return;
+            var rect = el.getBoundingClientRect();
+            var $submenu = $li.children('ul.submenu');
+            var $tooltip = $li.find('> a:not(.has-arrow) span');
+            var windowHeight = $(window).height();
 
-                    // If menu would extend past bottom margin (within 30px of window edge), flip upward
-                    if (itemTop + estimatedHeight > windowHeight - 30) {
-                        $li.addClass('dropup-item');
-                    } else {
-                        // Keep manual dropup-item if already declared in blade, or preserve alignment
-                        if (!$li.hasClass('force-dropup')) {
-                            $li.removeClass('dropup-item');
-                        }
-                    }
+            if ($submenu.length) {
+                var estimatedHeight = $submenu.outerHeight() || ($submenu.children('li').length * 44 + 40);
+                var topPos = rect.top;
+                if (topPos + estimatedHeight > windowHeight - 20) {
+                    topPos = Math.max(75, windowHeight - estimatedHeight - 20);
+                }
+                $submenu.css({
+                    'position': 'fixed',
+                    'top': topPos + 'px',
+                    'left': '72px'
+                });
+            }
+
+            if ($tooltip.length) {
+                var tooltipTop = rect.top + (rect.height / 2);
+                $tooltip.css({
+                    'position': 'fixed',
+                    'top': tooltipTop + 'px',
+                    'left': '72px'
+                });
+            }
+        }
+
+        $('#side-menu').on('mouseenter', '> li', function () {
+            updateFlyoutPosition($(this));
+        });
+
+        // Real-time position tracking if user scrolls the collapsed sidebar while hovering
+        $('.left.side-menu').on('scroll', function () {
+            if ($('body').hasClass('enlarged')) {
+                var $hovered = $('#side-menu > li:hover');
+                if ($hovered.length) {
+                    updateFlyoutPosition($hovered);
                 }
             }
         });

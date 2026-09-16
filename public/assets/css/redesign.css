@@ -257,24 +257,65 @@ h1, h2, h3, h4, h5, h6 {
    Collapsed / Enlarged Sidebar Mode (.enlarged)
    ========================================================================== */
 
-/* In collapsed mode, the sidebar must NOT clip horizontally so flyout menus can escape cleanly */
+/* In collapsed mode, make sidebar vertically scrollable while matching the normal sleek scrollbar */
+body.enlarged #wrapper .left.side-menu,
+body.enlarged .left.side-menu,
 .enlarged #wrapper .left.side-menu,
-.enlarged .left.side-menu {
+.enlarged .left.side-menu,
+.sidebar-collapsed #wrapper .left.side-menu,
+.sidebar-collapsed .left.side-menu {
     width: 72px !important;
-    z-index: 9999 !important;
-    overflow: visible !important;
-    overflow-x: visible !important;
-    overflow-y: visible !important;
+    z-index: 999 !important;
+    position: fixed !important;
+    top: 70px !important;
+    bottom: 0 !important;
+    height: calc(100vh - 70px) !important;
+    max-height: calc(100vh - 70px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
-.enlarged #wrapper .left.side-menu #sidebar-menu,
+/* Allow inner content to expand naturally inside the scrollable container */
+body.enlarged .left.side-menu #sidebar-menu,
+body.enlarged .left.side-menu .slimScrollDiv,
+body.enlarged .left.side-menu .slimscroll-menu,
+body.enlarged #remove-scroll,
 .enlarged .left.side-menu #sidebar-menu,
-.enlarged #wrapper .left.side-menu .slimScrollDiv,
 .enlarged .left.side-menu .slimScrollDiv,
-.enlarged #wrapper .left.side-menu .slimscroll-menu,
 .enlarged .left.side-menu .slimscroll-menu,
 .enlarged #remove-scroll {
+    height: auto !important;
+    min-height: 100% !important;
     overflow: visible !important;
+}
+
+/* Sleek Scrollbar for Collapsed State (Matches Normal/Expanded Mode) */
+body.enlarged .left.side-menu::-webkit-scrollbar,
+.enlarged .left.side-menu::-webkit-scrollbar,
+.sidebar-collapsed .left.side-menu::-webkit-scrollbar {
+    width: 5px !important;
+}
+
+body.enlarged .left.side-menu::-webkit-scrollbar-track,
+.enlarged .left.side-menu::-webkit-scrollbar-track,
+.sidebar-collapsed .left.side-menu::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+body.enlarged .left.side-menu::-webkit-scrollbar-thumb,
+.enlarged .left.side-menu::-webkit-scrollbar-thumb,
+.sidebar-collapsed .left.side-menu::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 4px !important;
+}
+
+body.enlarged .left.side-menu:hover::-webkit-scrollbar-thumb,
+.enlarged .left.side-menu:hover::-webkit-scrollbar-thumb,
+.sidebar-collapsed .left.side-menu:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.4) !important;
 }
 
 .enlarged #wrapper .navbar-custom,
@@ -410,9 +451,8 @@ h1, h2, h3, h4, h5, h6 {
 .enlarged #sidebar-menu > ul > li:not(:has(ul.submenu)):hover > a:not(.has-arrow) span {
     display: inline-flex !important;
     align-items: center !important;
-    position: absolute !important;
-    left: 56px !important;
-    top: 50% !important;
+    position: fixed !important;
+    left: 72px !important;
     transform: translateY(-50%) !important;
     background-color: #0b4776 !important;
     color: #ffffff !important;
@@ -531,16 +571,15 @@ body.enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > a {
     display: none;
 }
 
-/* Floating Submenu Container (Flyout Panel) */
+/* Floating Submenu Container (Flyout Panel) - position: fixed prevents overflow-y clipping */
 .enlarged #wrapper #sidebar-menu > ul > li:hover > ul.submenu,
 .enlarged #sidebar-menu > ul > li:hover > ul.submenu,
 .enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > ul.submenu,
 .enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > ul {
     display: flex !important;
     flex-direction: column !important;
-    position: absolute !important;
-    left: 70px !important;
-    top: -2px !important;
+    position: fixed !important;
+    left: 72px !important;
     min-width: 250px !important;
     width: max-content !important;
     max-width: 320px !important;
@@ -579,7 +618,7 @@ body.enlarged #wrapper .left.side-menu #sidebar-menu ul > li:hover > a {
 .enlarged #wrapper .left.side-menu #sidebar-menu ul > li.dropup-item:hover > ul.submenu,
 .enlarged #wrapper .left.side-menu #sidebar-menu ul > li.dropup-item:hover > ul {
     top: auto !important;
-    bottom: -2px !important;
+    bottom: 20px !important;
     border-radius: 10px !important;
 }
 

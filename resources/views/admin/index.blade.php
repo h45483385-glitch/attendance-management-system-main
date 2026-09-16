@@ -78,7 +78,54 @@
 @endsection
 
 @section('content')
-
+<!-- ON-TIME & OFF-TIME OPERATIONAL CONTROL BANNER -->
+<div class="card shadow-sm border-0 mb-4 rounded-lg" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white;">
+    <div class="card-body p-4">
+        <div class="row align-items-center">
+            <div class="col-lg-7 mb-3 mb-lg-0">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="badge badge-pill badge-success mr-2 px-2 py-1" style="font-size: 11px;">
+                        <span class="status-dot-pulse status-dot-online mr-1"></span> LIVE MONITORING
+                    </span>
+                    <span class="text-white-50 font-12 font-weight-semibold">Shift Timing & Attendance Transparency Hub</span>
+                </div>
+                <h4 class="font-weight-bold text-white mb-2">On-Time & Off-Time Operations</h4>
+                <p class="text-light mb-0 font-13" style="opacity: 0.85;">
+                    Real-time tracking of employee arrival compliance, grace period adherence, shift departures, and live floor occupancy.
+                </p>
+            </div>
+            <div class="col-lg-5">
+                <div class="row text-center">
+                    <div class="col-3 border-right border-secondary">
+                        <span class="text-white-50 font-11 text-uppercase d-block">On-Time</span>
+                        <h4 class="font-weight-bold text-success mb-0 mt-1">{{ $ontimeEmp }}</h4>
+                        <span class="badge badge-soft-success font-10">{{ $onTimePercentage }}% Ratio</span>
+                    </div>
+                    <div class="col-3 border-right border-secondary">
+                        <span class="text-white-50 font-11 text-uppercase d-block">Late</span>
+                        <h4 class="font-weight-bold text-warning mb-0 mt-1">{{ $lateArrivals }}</h4>
+                        <span class="text-muted font-10">Grace Over</span>
+                    </div>
+                    <div class="col-3 border-right border-secondary">
+                        <span class="text-white-50 font-11 text-uppercase d-block">On Break</span>
+                        <h4 class="font-weight-bold text-info mb-0 mt-1">{{ $onBreak }}</h4>
+                        <span class="text-muted font-10">Temporary</span>
+                    </div>
+                    <div class="col-3">
+                        <span class="text-white-50 font-11 text-uppercase d-block">Off-Time</span>
+                        <h4 class="font-weight-bold text-light mb-0 mt-1">{{ $offTimeEmp }}</h4>
+                        <span class="badge badge-soft-light font-10">Departed</span>
+                    </div>
+                </div>
+                <div class="text-right mt-3">
+                    <a href="{{ route('occupancy.index') }}" class="btn btn-sm btn-outline-light rounded-pill px-3">
+                        <i class="ti-direction-alt mr-1"></i> View Live Floor Occupancy &rarr;
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- 1. COMPREHENSIVE LIVE ATTENDANCE & BIOMETRIC METRICS ROW -->
 <div class="row mt-3">

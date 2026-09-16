@@ -332,4 +332,12 @@ class AttendanceController extends Controller
 
         return redirect()->back()->with('success', 'Attendance marked!');
     }
+
+    /**
+     * Show personal / attendance dashboard
+     */
+    public function dashboard()
+    {
+        return view('admin.dashboard');
+    }
 }

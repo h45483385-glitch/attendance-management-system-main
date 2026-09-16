@@ -72,10 +72,7 @@ class DatabaseSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        // 6. Link Employee to Default Shift
-        DB::table('schedule_employees')->insert([
-            'emp_id' => $empId,
-            'schedule_id' => $morningShift,
-        ]);
+        // 7. Seed full RBAC Roles and test users
+        $this->call(TestUserRoleSeeder::class);
     }
 }

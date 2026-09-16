@@ -65,6 +65,13 @@ class AdminController extends Controller
             ? round(($ontimeEmp / $presentToday) * 100)
             : 0;
 
+        // Off-Time / Checked-out for the day
+        $offTimeEmp = Attendance::whereDate('attendance_date', $today)
+            ->whereNotNull('check_out_time')
+            ->where('state', 0)
+            ->distinct()
+            ->count('emp_id');
+
         // 7. Fingerprint Hardware Status Panel Data
         $fingerDevices = FingerDevices::all();
         $totalFingerDevices = $fingerDevices->count();
@@ -152,6 +159,8 @@ class AdminController extends Controller
             'absentToday',
             'lateArrivals',
             'onBreak',
+            'ontimeEmp',
+            'offTimeEmp',
             'onTimePercentage',
             'devicesOnline',
             'todayLogs',
